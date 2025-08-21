@@ -104,12 +104,6 @@ async function login() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const error = document.getElementById('error');
-if(validLogin){
-    localStorage.setItem("currentUser", username);
-    // Agregar a Firebase usuarios conectados
-    firebase.database().ref('connectedUsers/' + username).set(true);
-    window.location.href = "index.html"; // o a donde quieras redirigir
-}
 
     const snapshot = await usersRef.child(username).get();
     if(snapshot.exists()) {
@@ -145,3 +139,4 @@ function logout() {
 </script>
 </body>
 </html>
+
