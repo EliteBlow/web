@@ -85,29 +85,44 @@ function renderPageChecklist(containerId, selectedPages = []) {
 function renderUsers() {
     const table = document.getElementById("userTable");
     table.innerHTML = '<tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>';
+
     usersRef.once('value', snapshot => {
         snapshot.forEach(childSnap => {
             const user = childSnap.key;
-            if(user === "admin") return;
             const data = childSnap.val();
             const row = table.insertRow();
+
+            // Usuario y contraseña
             row.insertCell(0).textContent = user;
             row.insertCell(1).textContent = atob(data.password);
             row.insertCell(2).textContent = data.pages.join(", ");
+
+            // Acciones
             const actions = row.insertCell(3);
 
+            // Botón Editar para todos
             const editBtn = document.createElement("button");
             editBtn.textContent = "Editar";
             editBtn.onclick = () => editUser(user, data);
             actions.appendChild(editBtn);
 
-            const delBtn = document.createElement("button");
-            delBtn.textContent = "Eliminar";
-            delBtn.onclick = () => deleteUser(user);
-            actions.appendChild(delBtn);
+            // Botón Eliminar SOLO si no es admin
+            if (user !== "admin") {
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "Eliminar";
+                delBtn.onclick = () => deleteUser(user);
+                actions.appendChild(delBtn);
+            } else {
+                const note = document.createElement("span");
+                note.style.color = "gray";
+                note.style.marginLeft = "10px";
+                note.textContent = "No se puede eliminar";
+                actions.appendChild(note);
+            }
         });
     });
 }
+
 
 // === AÑADIR USUARIO ===
 function addUser() {
@@ -184,4 +199,5 @@ function logout() {
 </script>
 </body>
 </html>
+
 
