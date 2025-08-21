@@ -70,13 +70,7 @@ window.onload = function() {
             window.location.href = "index.html";
         } else {
             currentUserData = snapshot.val();
-            // ADMIN tiene acceso total automáticamente
-            if(currentUser !== "admin" && !currentUserData.pages.includes("admin.html")){
-                alert("No tienes permiso para acceder a esta página");
-                window.location.href = "index.html";
-                return;
-            }
-            if(currentUser !== "admin" && !currentUserData.isAdmin){
+            if(currentUser !== "admin" && (!currentUserData.pages.includes("admin.html") || !currentUserData.isAdmin)){
                 alert("Solo administradores pueden acceder");
                 window.location.href = "index.html";
                 return;
@@ -110,71 +104,127 @@ function renderUsers() {
             const user = childSnap.key;
             const data = childSnap.val();
             if(user === "admin") return; // admin no se muestra
+
             const row = table.insertRow();
             row.insertCell(0).textContent = user;
 
+            // Contraseña oculta con botón mostrar
             const passCell = row.insertCell(1);
-            passCell.style.display = "flex";
-            passCell.style.alignItems = "center";
-            passCell.style.gap = "5px";
-            const passSpan = document.createElement("span");
-            passSpan.textContent = "********";
-            passCell.appendChild(passSpan);
+            passCell.style.display = "flex"; passCell.style.alignItems = "center"; passCell.style.gap = "5px";
+            const passSpan = document.createElement("span"); passSpan.textContent = "********"; passCell.appendChild(passSpan);
             const showBtn = document.createElement("button");
-            showBtn.textContent = "Mostrar";
-            showBtn.style.backgroundColor = "#17A2B8";
+            showBtn.textContent = "Mostrar"; showBtn.style.backgroundColor = "#17A2B8";
             showBtn.onclick = () => {
-                if(passSpan.textContent === "********") { passSpan.textContent = atob(data.password); showBtn.textContent = "Ocultar"; }
-                else { passSpan.textContent = "********"; showBtn.textContent = "Mostrar"; }
+                if(passSpan.textContent === "********"){ passSpan.textContent = atob(data.password); showBtn.textContent="Ocultar"; }
+                else{ passSpan.textContent = "********"; showBtn.textContent="Mostrar"; }
             };
             passCell.appendChild(showBtn);
 
             row.insertCell(2).textContent = data.pages.join(", ");
 
+            // Administrador checkbox
             const adminCell = row.insertCell(3);
             if(currentUser === "admin"){
                 const adminCheckbox = document.createElement("input");
-                adminCheckbox.type = "checkbox";
-                adminCheckbox.checked = data.isAdmin || false;
-                adminCheckbox.onclick = () => usersRef.child(user).update({ isAdmin: adminCheckbox.checked });
+                adminCheckbox.type = "checkbox"; adminCheckbox.checked = data.isAdmin || false;
+                adminCheckbox.onclick = ()=>usersRef.child(user).update({isAdmin:adminCheckbox.checked});
                 adminCell.appendChild(adminCheckbox);
-            } else {
-                adminCell.textContent = data.isAdmin ? "Sí" : "No";
-            }
+            } else { adminCell.textContent = data.isAdmin ? "Sí":"No"; }
 
+            // Acciones
             const actions = row.insertCell(4);
             const editBtn = document.createElement("button");
-            editBtn.textContent = "Editar";
-            editBtn.style.backgroundColor = "#007BFF";
-            editBtn.onclick = () => editUser(user, data);
-            actions.appendChild(editBtn);
+            editBtn.textContent="Editar"; editBtn.style.backgroundColor="#007BFF"; editBtn.onclick = ()=>editUser(user,data); actions.appendChild(editBtn);
             const delBtn = document.createElement("button");
-            delBtn.textContent = "Eliminar";
-            delBtn.style.backgroundColor = "#DC3545";
-            delBtn.onclick = () => deleteUser(user);
-            actions.appendChild(delBtn);
+            delBtn.textContent="Eliminar"; delBtn.style.backgroundColor="#DC3545"; delBtn.onclick = ()=>deleteUser(user); actions.appendChild(delBtn);
         });
     });
 }
 
-function addUser() {
-    const username = document.getElementById("newUser").value.trim();
-    const password = document.getElementById("newPass").value.trim();
-    const pages = Array.from(document.querySelectorAll('#newUserPages input:checked')).map(cb => cb.value);
-    let isAdmin = false;
-    if(currentUser === "admin"){
-        isAdmin = document.getElementById("newIsAdmin").checked;
+// === FUNCIONES DE ADMINISTRACIÓN ===
+
+function editAdmin(){
+    const pin = prompt("Introduce tu PIN de seguridad:");
+    if(pin !== "Taru85"){ alert("PIN incorrecto"); return; }
+    const modal=document.createElement('div');
+    modal.style='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000;';
+    modal.innerHTML=`
+        <div style="background:white;padding:20px;border-radius:10px;max-width:400px;width:100%;">
+            <h3>Editar Admin</h3>
+            <label>Nueva contraseña:</label>
+            <input type="password" id="adminNewPass" style="width:100%; margin-bottom:10px; padding:5px;">
+            <div style="text-align:right;">
+                <button id="cancelAdmin" style="margin-right:10px; background:gray; color:white;">Cancelar</button>
+                <button id="saveAdmin" style="background:green; color:white;">Guardar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('cancelAdmin').onclick = ()=>modal.remove();
+    document.getElementById('saveAdmin').onclick = ()=>{
+        const newPass = document.getElementById('adminNewPass').value.trim();
+        if(!newPass){ alert("Contraseña vacía"); return; }
+        usersRef.child("admin").update({password:btoa(newPass)}).then(()=>{
+            alert("Contraseña admin actualizada"); modal.remove();
+        });
+    };
+}
+
+function editUser(user,data){
+    const modal=document.createElement('div');
+    modal.style='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000;';
+    modal.innerHTML=`
+        <div style="background:white;padding:20px;border-radius:10px;max-width:400px;width:100%;">
+            <h3>Editar usuario: ${user}</h3>
+            <label>Contraseña:</label>
+            <input type="password" id="editPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
+            <button id="togglePass" style="margin-bottom:10px; background:#17A2B8;">Mostrar</button>
+            <label>Páginas:</label>
+            <div id="editUserPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;"></div>
+            <div style="text-align:right;">
+                <button id="cancelEdit" style="margin-right:10px; background:gray; color:white;">Cancelar</button>
+                <button id="saveChanges" style="background:green; color:white;">Guardar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    renderPageChecklist('editUserPages', data.pages);
+
+    document.getElementById('togglePass').onclick = ()=>{
+        const passInput = document.getElementById('editPassword');
+        if(passInput.type==="password"){ passInput.type="text"; document.getElementById('togglePass').textContent="Ocultar"; }
+        else{ passInput.type="password"; document.getElementById('togglePass').textContent="Mostrar"; }
+    };
+
+    document.getElementById('cancelEdit').onclick = ()=>modal.remove();
+    document.getElementById('saveChanges').onclick = ()=>{
+        const newPass = document.getElementById('editPassword').value.trim();
+        const newPages = Array.from(document.querySelectorAll('#editUserPages input:checked')).map(cb=>cb.value);
+        if(!newPass){ alert("Contraseña vacía"); return; }
+        usersRef.child(user).update({password:btoa(newPass), pages:newPages}).then(()=>{
+            alert("Usuario actualizado"); modal.remove(); renderUsers();
+        });
+    };
+}
+
+function deleteUser(user){
+    if(confirm(`¿Eliminar usuario ${user}?`)){
+        usersRef.child(user).remove().then(()=>renderUsers());
     }
+}
+
+function addUser(){
+    const username=document.getElementById("newUser").value.trim();
+    const password=document.getElementById("newPass").value.trim();
+    const pages=Array.from(document.querySelectorAll('#newUserPages input:checked')).map(cb=>cb.value);
+    let isAdmin=false;
+    if(currentUser==="admin"){ isAdmin=document.getElementById("newIsAdmin").checked; }
     if(!username || !password){ alert("Usuario y contraseña obligatorios"); return; }
-    usersRef.child(username).set({ password: btoa(password), pages, isAdmin });
+    usersRef.child(username).set({password:btoa(password), pages, isAdmin});
     renderUsers();
     document.getElementById("newUser").value="";
     document.getElementById("newPass").value="";
     renderPageChecklist('newUserPages');
     if(currentUser==="admin"){ document.getElementById("newIsAdmin").checked=false; }
 }
-
-// Aquí se pueden agregar las funciones editUser(), editAdmin() y deleteUser() como antes, manteniendo modales y mostrar/ocultar contraseñas
 
 function logout(){
     localStorage.removeItem("currentUser");
