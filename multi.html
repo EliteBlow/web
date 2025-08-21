@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Formulario con persistencia y exportación</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; display: flex; flex-direction: column; align-items: center; }
+  form { max-width: 520px; width: 100%; display: grid; gap: 1rem; margin-bottom: 2rem; }
+  label { font-weight: 600; }
+  input, select, button { width: 100%; padding: .65rem .75rem; border: 1px solid #ccc; border-radius: .5rem; }
+  .row { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; }
+  .actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+  table { border-collapse: collapse; width: 100%; max-width: 800px; margin-bottom: 1rem; }
+  th, td { border: 1px solid #ccc; padding: .5rem; text-align: left; }
+  th { background: #f5f5f5; }
+  .btn { padding: .3rem .6rem; border: none; border-radius: .3rem; cursor: pointer; }
+  .btn-edit { background-color: #ffdd57; }
+  .btn-delete { background-color: #ff6b6b; color: white; }
+  .condicion { padding: 2px 6px; border-radius: 4px; color: white; font-weight: 600; display:inline-block; text-align:center; min-width:80px; }
+  .amigos { background-color: #4caf50; }
+  .hermanos { background-color: #2196f3; }
+  .multicuenta { background-color: #f44336; }
+</style>
+</head>
+<body>
+
+<h1>Añadir información</h1>
+
+<form id="form-add" novalidate>
+  <div class="row">
+    <div>
+      <label for="nick1">Nick 1</label>
+      <input id="nick1" name="nick1" type="text" minlength="2" maxlength="32" required />
+    </div>
+    <div>
+      <label for="nick2">Nick 2</label>
+      <input id="nick2" name="nick2" type="text" minlength="2" maxlength="32" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="nick3">Nick 3</label>
+      <input id="nick3" name="nick3" type="text" minlength="2" maxlength="32" />
+    </div>
+    <div>
+      <label for="condicion">Condición</label>
+      <select id="condicion" name="condicion" required>
+        <option value="">— Selecciona —</option>
+        <option value="amigos">Amigos</option>
+        <option value="hermanos">Hermanos</option>
+        <option value="multicuenta">Multicuenta</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="submit">Guardar</button>
+    <button type="reset">Limpiar</button>
+  </div>
+</form>
+
+<h2>Registros guardados</h2>
+<table id="tabla-registros">
+  <thead>
+    <tr>
+      <th>Nick 1</th>
+      <th>Nick 2</th>
+      <th>Nick 3</th>
+      <th>Condición</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div class="actions">
+  <button type="button" id="export-excel">Exportar a Excel</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const form = document.getElementById('form-add');
+const tabla = document.querySelector('#tabla-registros tbody');
+let registros = [];
+
+// Cargar registros guardados en localStorage al iniciar
+function cargarRegistros() {
+  const datos = localStorage.getItem('registros');
+  if (datos) registros = JSON.parse(datos);
+}
+
+// Guardar registros en localStorage
+function guardarRegistros() {
+  localStorage.setItem('registros', JSON.stringify(registros));
+}
+
+// Renderizar la tabla
+function renderTabla() {
+  tabla.innerHTML = '';
+  registros.forEach((r, i) => {
+    const fila = document.createElement('tr');
+    const claseCondicion = r.condicion.toLowerCase();
+    fila.innerHTML = `
+      <td>${r.nick1}</td>
+      <td>${r.nick2 || '-'}</td>
+      <td>${r.nick3 || '-'}</td>
+      <td><span class="condicion ${claseCondicion}">${r.condicion}</span></td>
+      <td>
+        <button type="button" class="btn btn-delete" data-index="${i}">Eliminar</button>
+      </td>
+    `;
+    tabla.appendChild(fila);
+  });
+}
+
+// Evento submit del formulario: siempre agregar nuevo registro
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (!form.checkValidity()) { form.reportValidity(); return; }
+
+  const opcion = form.condicion.options[form.condicion.selectedIndex].text;
+
+  const nuevoRegistro = {
+    nick1: form.nick1.value.trim(),
+    nick2: form.nick2.value.trim(),
+    nick3: form.nick3.value.trim(),
+    condicion: opcion
+  };
+
+  registros.push(nuevoRegistro); // siempre agregar
+  form.reset();
+  guardarRegistros();
+  renderTabla();
+});
+
+// Eliminar registros
+tabla.addEventListener('click', function(e) {
+  const index = e.target.dataset.index;
+  if (e.target.classList.contains('btn-delete')) {
+    registros.splice(index, 1);
+    guardarRegistros();
+    renderTabla();
+  }
+});
+
+// Exportar a Excel
+document.getElementById('export-excel').addEventListener('click', () => {
+  if (registros.length === 0) {
+    alert('No hay registros para exportar.');
+    return;
+  }
+
+  const data = registros.map(r => ({
+    'Nick 1': r.nick1,
+    'Nick 2': r.nick2 || '-',
+    'Nick 3': r.nick3 || '-',
+    'Condición': r.condicion
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+  XLSX.writeFile(wb, 'registros.xlsx');
+});
+
+// Inicializar
+cargarRegistros();
+renderTabla();
+</script>
+
+</body>
+</html>

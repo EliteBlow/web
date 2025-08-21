@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Búsqueda de Hacks en Eternal</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #22d3ee;
+      --accent-2: #60a5fa;
+      --ok: #34d399;
+    }
+    body { margin: 0; font-family: system-ui; background: var(--bg); color: var(--text); }
+    header { max-width: 980px; margin: 20px auto 16px; padding: 0 16px; text-align: center; }
+    h1 { font-size: clamp(28px, 4vw, 40px); margin: 0 0 8px; }
+    p.lead { color: var(--muted); margin: 0; }
+    .info-bar { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; align-items: center; justify-content: center; }
+    .info-bar label { font-size: 14px; color: var(--muted); margin-right: 6px; }
+    .info-bar input { padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(148,163,184,.25); background: rgba(15,23,42,.7); color: var(--text); }
+    .info-bar .datetime { font-size: 14px; color: var(--muted); }
+    .card { max-width: 980px; margin: 16px auto; background: rgba(17,24,39,.75); border: 1px solid rgba(148,163,184,.12); border-radius: 20px; padding: 20px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    button { border: 1px solid rgba(148,163,184,.25); background: #0b1220; color: var(--text); padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+    button.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; color: #001018; }
+    .progress { margin: 8px 0 0; height: 10px; width: 100%; background: rgba(148,163,184,.18); border-radius: 99px; overflow: hidden; border: 1px solid rgba(148,163,184,.25); }
+    .progress > i { display: block; height: 100%; width: var(--w,0%); background: linear-gradient(90deg, var(--ok), var(--accent)); transition: width .25s ease; }
+    .kpi { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    section.group { border: 1px solid rgba(148,163,184,.15); border-radius: 16px; padding: 14px; background: rgba(2,6,23,.35); }
+    section.group h2 { font-size: 18px; margin: 0 0 10px; }
+    ul.chk { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 8px; }
+    .item { display: flex; align-items: start; gap: 10px; background: rgba(15,23,42,.6); border: 1px solid rgba(148,163,184,.15); border-radius: 12px; padding: 10px; }
+    .footer { max-width: 980px; margin: 12px auto 40px; padding: 0 16px; color: var(--muted); font-size: 12px; text-align: center; }
+    input[type="checkbox"] { width: 18px; height: 18px; accent-color: #22d3ee; }
+    code { background: rgba(2,6,23,.45); padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(148,163,184,.18); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sistema de seguridad de Eternal (SS)</h1>
+    <div class="info-bar">
+      <label for="jugador">Jugador:</label>
+      <input type="text" id="jugador" placeholder="Nombre del jugador">
+      <label for="staff">Staff:</label>
+      <input type="text" id="staff" placeholder="Nombre del staff">
+      <span class="datetime" id="datetime"></span>
+    </div>
+  </header>
+
+  <main class="card">
+    <div class="controls">
+      <button class="primary" id="btn-mark-all" type="button">Marcar todo</button>
+      <button id="btn-clear" type="button">Borrar marcas</button>
+      <button id="btn-save" type="button">Guardar</button>
+      <span class="kpi" id="kpi"><span class="badge" id="count">0/0</span> completado</span>
+      <div class="progress"><i id="bar"></i></div>
+    </div>
+
+    <div class="grid" id="groups">
+      <section class="group">
+        <h2>1) Revisión de carpetas del juego</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Inspeccionar carpeta <code>.minecraft</code> (versions, mods, resourcepacks, shaderpacks).<br><small>Ruta típica Windows: <code>C:\Users\<usuario>\AppData\Roaming\.minecraft</code></small></label></li>
+          <li class="item"><input type="checkbox" data-i><label>Buscar JARs o versiones duplicadas con nombres extraños.</label></li>
+          <li class="item"><input type="checkbox" data-i><label>Revisar clientes/launchers alternativos (Lunar, Badlion, Feather, etc.).</label></li>
+        </ul>
+      </section>
+
+      <section class="group">
+        <h2>2) Archivos ejecutables y programas externos</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Escanear Descargas y Escritorio por <code>.exe</code>, <code>.jar</code>, <code>.bat</code> sospechosos.</label></li>
+          <li class="item"><input type="checkbox" data-i><label>Palabras clave: injector, ghost client, vape, wurst.</label></li>
+        </ul>
+      </section>
+
+      <section class="group">
+        <h2>3) Procesos activos</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Con Minecraft abierto, comprobar procesos sospechosos en Administrador de tareas.</label></li>
+          <li class="item"><input type="checkbox" data-i><label>Revisar pestaña Inicio por programas que se ejecutan al arrancar.</label></li>
+        </ul>
+      </section>
+
+      <section class="group">
+        <h2>4) Historial del navegador</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Revisar descargas recientes desde sitios de mods no fiables.</label></li>
+          <li class="item"><input type="checkbox" data-i><label>Buscar términos como hack client, free minecraft hack, ghost client.</label></li>
+        </ul>
+      </section>
+
+      <section class="group">
+        <h2>5) Accesos directos</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Comprobar Ruta de destino por parámetros extraños (<code>-javaagent:</code>).</label></li>
+          <li class="item"><input type="checkbox" data-i><label>Verificar que apuntan al launcher correcto.</label></li>
+        </ul>
+      </section>
+
+      <section class="group">
+        <h2>6) Programas instalados</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Ordenar por fecha de instalación y revisar programas recientes.</label></li>
+        </ul>
+      </section>
+
+      <section class="group">
+        <h2>7) Redes</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Revisar historial de YouTube en búsqueda de contenido relacionado con hacks.</label></li>
+        </ul>
+      </section>
+
+      <section class="group">
+        <h2>8) Evidencias y cierre</h2>
+        <ul class="chk">
+          <li class="item"><input type="checkbox" data-i><label>Tomar screenshots (SS) y guardar evidencias.</label></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <div class="footer">
+    By Eliteblow
+  </div>
+
+  <script>
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const countEl = document.getElementById('count');
+    const progressBar = document.getElementById('bar');
+    const jugadorInput = document.getElementById('jugador');
+    const staffInput = document.getElementById('staff');
+
+    function updateProgress() {
+      const total = checkboxes.length;
+      const checked = Array.from(checkboxes).filter(c => c.checked).length;
+      countEl.textContent = `${checked}/${total}`;
+      const percent = total ? (checked / total) * 100 : 0;
+      progressBar.style.setProperty('--w', percent + '%');
+    }
+
+    document.getElementById('btn-mark-all').addEventListener('click', () => {
+      checkboxes.forEach(c => c.checked = true);
+      updateProgress();
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      checkboxes.forEach(c => c.checked = false);
+      updateProgress();
+    });
+
+    document.getElementById('btn-save').addEventListener('click', () => {
+      const jugador = jugadorInput.value.trim();
+      const staff = staffInput.value.trim();
+
+      if (!jugador || !staff) {
+        alert("Por favor, completa los campos de Jugador y Staff antes de guardar.");
+        return;
+      }
+
+      const fecha = new Date().toLocaleString();
+      let contenido = `Búsqueda de Hacks en Eternal\n`;
+      contenido += `Fecha: ${fecha}\nJugador: ${jugador}\nStaff: ${staff}\n\n`;
+
+      checkboxes.forEach(c => {
+        const label = c.nextElementSibling.innerText.replace(/\n/g, ' ').trim();
+        const estado = c.checked ? "[X]" : "[ ]";
+        contenido += `${estado} ${label}\n`;
+      });
+
+      const blob = new Blob([contenido], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `checklist_eternal_${Date.now()}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    checkboxes.forEach(c => c.addEventListener('change', updateProgress));
+    updateProgress();
+
+    function updateDateTime() {
+      const dt = new Date();
+      document.getElementById('datetime').textContent = dt.toLocaleString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+  </script>
+</body>
+</html>
