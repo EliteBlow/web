@@ -5,18 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administración de Usuarios</title>
 <style>
-body { font-family: Arial, sans-serif; padding: 20px; }
+body { font-family: Arial, sans-serif; padding: 20px; position: relative; }
 table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
 th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-button { padding: 5px 10px; margin: 2px; }
+button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 .checklist { margin: 10px 0; }
 .checklist label { display: block; margin: 5px 0; }
+#opButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: darkred;
+  color: white;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 <h2>Gestión de Usuarios</h2>
+<button id="opButton" onclick="enableAdminEdit()">OP</button>
 
 <table id="userTable">
 <tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>
@@ -27,7 +40,7 @@ button { padding: 5px 10px; margin: 2px; }
 <input type="text" id="newPass" placeholder="Contraseña">
 
 <div id="newUserPages" class="checklist">
-    <!-- Aquí se generarán los checkboxes dinámicamente -->
+    <!-- Checkboxes dinámicos -->
 </div>
 
 <button onclick="addUser()">Añadir usuario</button>
@@ -36,15 +49,15 @@ button { padding: 5px 10px; margin: 2px; }
 <button onclick="logout()">Cerrar sesión</button>
 
 <script>
-// === CONFIGURACIÓN DE FIREBASE ===
+// === CONFIGURACIÓN FIREBASE ===
 const firebaseConfig = {
-  apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
-  authDomain: "et-accounts.firebaseapp.com",
-  databaseURL: "https://et-accounts-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "et-accounts",
-  storageBucket: "et-accounts.firebasestorage.app",
-  messagingSenderId: "1006439185867",
-  appId: "1:1006439185867:web:ee9221150be923340e4a4e"
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  databaseURL: "TU_DATABASE_URL",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_STORAGE_BUCKET",
+  messagingSenderId: "TU_MESSAGING_SENDER_ID",
+  appId: "TU_APP_ID"
 };
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
@@ -53,8 +66,11 @@ const usersRef = database.ref('users');
 // === LISTA DE PÁGINAS DISPONIBLES ===
 const availablePages = ["multi.html", "ss.html", "vote.html", "admin.html"];
 
+// === CONTROL DE EDICIÓN DEL ADMIN ===
+let adminEditEnabled = false;
+
 // === INICIO ===
-window.onload = async function() {
+window.onload = function() {
     const currentUser = localStorage.getItem("currentUser");
     if(currentUser !== "admin") {
         alert("Acceso denegado");
@@ -64,6 +80,13 @@ window.onload = async function() {
         renderPageChecklist('newUserPages');
     }
 };
+
+// === HABILITAR EDICIÓN DEL ADMIN ===
+function enableAdminEdit() {
+    adminEditEnabled = true;
+    alert("Edición de ADMIN habilitada.");
+    renderUsers();
+}
 
 // === GENERAR CHECKBOXES DINÁMICOS ===
 function renderPageChecklist(containerId, selectedPages = []) {
@@ -92,21 +115,25 @@ function renderUsers() {
             const data = childSnap.val();
             const row = table.insertRow();
 
-            // Usuario y contraseña
             row.insertCell(0).textContent = user;
             row.insertCell(1).textContent = atob(data.password);
             row.insertCell(2).textContent = data.pages.join(", ");
 
-            // Acciones
             const actions = row.insertCell(3);
 
-            // Botón Editar para todos
+            // === Botón editar ===
             const editBtn = document.createElement("button");
             editBtn.textContent = "Editar";
-            editBtn.onclick = () => editUser(user, data);
+
+            if (user === "admin" && !adminEditEnabled) {
+                editBtn.disabled = true;
+                editBtn.title = "Pulsa el botón OP para editar admin";
+            } else {
+                editBtn.onclick = () => editUser(user, data);
+            }
             actions.appendChild(editBtn);
 
-            // Botón Eliminar SOLO si no es admin
+            // === Botón eliminar ===
             if (user !== "admin") {
                 const delBtn = document.createElement("button");
                 delBtn.textContent = "Eliminar";
@@ -122,7 +149,6 @@ function renderUsers() {
         });
     });
 }
-
 
 // === AÑADIR USUARIO ===
 function addUser() {
@@ -140,7 +166,6 @@ function addUser() {
         pages
     });
     renderUsers();
-
     document.getElementById("newUser").value = "";
     document.getElementById("newPass").value = "";
     renderPageChecklist('newUserPages');
@@ -151,7 +176,6 @@ function editUser(user, data) {
     const newPass = prompt("Nueva contraseña para " + user, atob(data.password));
     if(newPass === null) return;
 
-    // Mostrar checklist en un prompt improvisado
     const modal = document.createElement('div');
     modal.style.position = 'fixed';
     modal.style.top = '0';
@@ -199,5 +223,3 @@ function logout() {
 </script>
 </body>
 </html>
-
-
