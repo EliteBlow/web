@@ -15,7 +15,6 @@
   th, td { border: 1px solid #ccc; padding: .5rem; text-align: left; }
   th { background: #f5f5f5; }
   .btn { padding: .3rem .6rem; border: none; border-radius: .3rem; cursor: pointer; }
-  .btn-edit { background-color: #ffdd57; }
   .btn-delete { background-color: #ff6b6b; color: white; }
   .condicion { padding: 2px 6px; border-radius: 4px; color: white; font-weight: 600; display:inline-block; text-align:center; min-width:80px; }
   .amigos { background-color: #4caf50; }
@@ -89,18 +88,18 @@ const fileInput = document.getElementById('file-input');
 const importBtn = document.getElementById('import-xlsx');
 let registros = [];
 
-// Cargar registros guardados en localStorage al iniciar
+// Cargar registros de localStorage
 function cargarRegistros() {
   const datos = localStorage.getItem('registros');
-  if (datos) registros = JSON.parse(datos);
+  registros = datos ? JSON.parse(datos) : [];
 }
 
-// Guardar registros en localStorage
+// Guardar registros
 function guardarRegistros() {
   localStorage.setItem('registros', JSON.stringify(registros));
 }
 
-// Renderizar la tabla
+// Renderizar tabla
 function renderTabla() {
   tabla.innerHTML = '';
   registros.forEach((r, i) => {
@@ -111,39 +110,33 @@ function renderTabla() {
       <td>${r.nick2 || '-'}</td>
       <td>${r.nick3 || '-'}</td>
       <td><span class="condicion ${claseCondicion}">${r.condicion}</span></td>
-      <td>
-        <button type="button" class="btn btn-delete" data-index="${i}">Eliminar</button>
-      </td>
+      <td><button type="button" class="btn btn-delete" data-index="${i}">Eliminar</button></td>
     `;
     tabla.appendChild(fila);
   });
 }
 
-// Evento submit del formulario: siempre agregar nuevo registro
-form.addEventListener('submit', function(e) {
+// Añadir nuevo registro
+form.addEventListener('submit', e => {
   e.preventDefault();
   if (!form.checkValidity()) { form.reportValidity(); return; }
-
-  const opcion = form.condicion.options[form.condicion.selectedIndex].text;
-
   const nuevoRegistro = {
     nick1: form.nick1.value.trim(),
     nick2: form.nick2.value.trim(),
     nick3: form.nick3.value.trim(),
-    condicion: opcion
+    condicion: form.condicion.options[form.condicion.selectedIndex].text
   };
-
-  registros.push(nuevoRegistro); // siempre agregar
+  registros.push(nuevoRegistro);
   form.reset();
   guardarRegistros();
   renderTabla();
 });
 
-// Eliminar registros
-tabla.addEventListener('click', function(e) {
-  const index = e.target.dataset.index;
+// Eliminar registro
+tabla.addEventListener('click', e => {
   if (e.target.classList.contains('btn-delete')) {
-    registros.splice(index, 1);
+    const idx = parseInt(e.target.dataset.index, 10);
+    registros.splice(idx, 1);
     guardarRegistros();
     renderTabla();
   }
@@ -151,52 +144,44 @@ tabla.addEventListener('click', function(e) {
 
 // Exportar a Excel
 document.getElementById('export-excel').addEventListener('click', () => {
-  if (registros.length === 0) {
-    alert('No hay registros para exportar.');
-    return;
-  }
-
+  if (!registros.length) { alert('No hay registros para exportar'); return; }
   const data = registros.map(r => ({
     'Nick 1': r.nick1,
-    'Nick 2': r.nick2 || '-',
-    'Nick 3': r.nick3 || '-',
+    'Nick 2': r.nick2 || '',
+    'Nick 3': r.nick3 || '',
     'Condición': r.condicion
   }));
-
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(data);
-
   XLSX.utils.book_append_sheet(wb, ws, 'Registros');
   XLSX.writeFile(wb, 'registros.xlsx');
 });
 
-// Importar desde Excel
+// Importar Excel (reemplaza registros actuales)
 importBtn.addEventListener('click', () => fileInput.click());
 
-fileInput.addEventListener('change', (e) => {
+fileInput.addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
-  reader.onload = function(event) {
-    const data = new Uint8Array(event.target.result);
+  reader.onload = evt => {
+    const data = new Uint8Array(evt.target.result);
     const wb = XLSX.read(data, { type: 'array' });
     const wsName = wb.SheetNames[0];
     const ws = wb.Sheets[wsName];
     const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-
+    // Vaciar registros actuales
+    registros = [];
     json.forEach(row => {
-      const nick1 = row['Nick 1'] || '';
-      const nick2 = row['Nick 2'] || '';
-      const nick3 = row['Nick 3'] || '';
-      const condicion = row['Condición'] || '';
-      if (nick1 && condicion) {
-        registros.push({ nick1, nick2, nick3, condicion });
-      }
+      const nick1 = (row['Nick 1'] || '').trim();
+      const nick2 = (row['Nick 2'] || '').trim();
+      const nick3 = (row['Nick 3'] || '').trim();
+      const condicion = (row['Condición'] || '').trim();
+      if (nick1 && condicion) registros.push({ nick1, nick2, nick3, condicion });
     });
-
     guardarRegistros();
     renderTabla();
+    fileInput.value = '';
   };
   reader.readAsArrayBuffer(file);
 });
@@ -205,6 +190,5 @@ fileInput.addEventListener('change', (e) => {
 cargarRegistros();
 renderTabla();
 </script>
-
 </body>
 </html>
