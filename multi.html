@@ -313,6 +313,12 @@ fileInput.addEventListener('change', async e => {
     // Limpiar todo primero
     await storage.clear();
 
+   <div class="actions">
+  <button type="button" id="export-excel">Exportar a Excel</button>
+  <button type="button" id="import-xlsx">Importar desde Excel</button>
+  <input type="file" id="file-input" accept=".xlsx" style="display:none">
+</div>
+ 
     // Insertar fila a fila
     for (const row of json){
       const nick1 = (row['Nick 1'] || '').trim();
