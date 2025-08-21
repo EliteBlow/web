@@ -6,7 +6,7 @@
 <title>Administración de Usuarios</title>
 <style>
 body { font-family: Arial, sans-serif; padding: 20px; position: relative; }
-table { width: 100%; border-collapse: collapse; margin-top: 60px; margin-bottom: 20px; }
+table { width: 80%; border-collapse: collapse; margin-bottom: 20px; }
 th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
 button { padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; color: white; }
 .checklist { margin: 10px 0; }
@@ -27,8 +27,12 @@ button { padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 5px; bo
     <button id="logoutButton" onclick="logout()">Cerrar sesión</button>
 </div>
 
-<h2>Gestión de Usuarios</h2>
+<h3 style="text-align:center;">Usuarios Conectados</h3>
+<table id="connectedTable" style="margin:auto;">
+    <tr><th>Usuario</th></tr>
+</table>
 
+<h2>Gestión de Usuarios</h2>
 <table id="userTable">
 <tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>
 </table>
@@ -36,9 +40,7 @@ button { padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 5px; bo
 <h3>Añadir nuevo usuario</h3>
 <input type="text" id="newUser" placeholder="Usuario">
 <input type="text" id="newPass" placeholder="Contraseña">
-
 <div id="newUserPages" class="checklist"></div>
-
 <button onclick="addUser()">Añadir usuario</button>
 
 <script>
@@ -55,8 +57,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const usersRef = database.ref('users');
+const connectedRef = database.ref('connectedUsers');
 
-// Lista de páginas disponibles
 const availablePages = ["multi.html", "ss.html", "vote.html", "admin.html"];
 
 window.onload = function() {
@@ -67,10 +69,11 @@ window.onload = function() {
     } else {
         renderUsers();
         renderPageChecklist('newUserPages');
+        renderConnectedUsers();
+        connectedRef.on('value', renderConnectedUsers);
     }
 };
 
-// Generar checkboxes dinámicos
 function renderPageChecklist(containerId, selectedPages = []) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -86,11 +89,21 @@ function renderPageChecklist(containerId, selectedPages = []) {
     });
 }
 
-// Mostrar usuarios normales (sin admin)
+function renderConnectedUsers() {
+    const table = document.getElementById("connectedTable");
+    table.innerHTML = '<tr><th>Usuario</th></tr>';
+    connectedRef.once('value', snapshot => {
+        snapshot.forEach(childSnap => {
+            const user = childSnap.key;
+            const row = table.insertRow();
+            row.insertCell(0).textContent = user;
+        });
+    });
+}
+
 function renderUsers() {
     const table = document.getElementById("userTable");
     table.innerHTML = '<tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>';
-
     usersRef.once('value', snapshot => {
         snapshot.forEach(childSnap => {
             const user = childSnap.key;
@@ -103,15 +116,12 @@ function renderUsers() {
             row.insertCell(2).textContent = data.pages.join(", ");
 
             const actions = row.insertCell(3);
-
-            // Botón Editar azul
             const editBtn = document.createElement("button");
             editBtn.textContent = "Editar";
             editBtn.style.backgroundColor = "#007BFF";
             editBtn.onclick = () => editUser(user, data);
             actions.appendChild(editBtn);
 
-            // Botón Eliminar rojo
             const delBtn = document.createElement("button");
             delBtn.textContent = "Eliminar";
             delBtn.style.backgroundColor = "#DC3545";
@@ -121,42 +131,30 @@ function renderUsers() {
     });
 }
 
-// Añadir nuevo usuario
 function addUser() {
     const username = document.getElementById("newUser").value.trim();
     const password = document.getElementById("newPass").value.trim();
     const pages = Array.from(document.querySelectorAll('#newUserPages input:checked')).map(cb => cb.value);
 
-    if(!username || !password) { 
-        alert("Usuario y contraseña obligatorios");
-        return; 
-    }
+    if(!username || !password) { alert("Usuario y contraseña obligatorios"); return; }
 
-    usersRef.child(username).set({
-        password: btoa(password),
-        pages
-    });
+    usersRef.child(username).set({ password: btoa(password), pages });
     renderUsers();
     document.getElementById("newUser").value = "";
     document.getElementById("newPass").value = "";
     renderPageChecklist('newUserPages');
 }
 
-// Editar usuario admin con PIN
 function editAdmin() {
     const inputPin = prompt("Introduce el PIN de seguridad para editar ADMIN:");
 
     usersRef.child("admin").once('value', snapshot => {
         if (!snapshot.exists()) { alert("No se encontró admin."); return; }
         const data = snapshot.val();
-        const storedPin = data.pin ? atob(data.pin) : "Taru85"; // PIN por defecto
+        const storedPin = data.pin ? atob(data.pin) : "Taru85";
 
-        if(inputPin !== storedPin){
-            alert("PIN incorrecto. Acceso denegado.");
-            return;
-        }
+        if(inputPin !== storedPin){ alert("PIN incorrecto. Acceso denegado."); return; }
 
-        // Modal admin
         const modal = document.createElement('div');
         modal.style.position='fixed'; modal.style.top='0'; modal.style.left='0';
         modal.style.width='100%'; modal.style.height='100%';
@@ -180,7 +178,6 @@ function editAdmin() {
             </div>
         `;
         document.body.appendChild(modal);
-
         renderPageChecklist('adminPages', data.pages);
 
         document.getElementById('cancelAdmin').onclick = () => modal.remove();
@@ -201,7 +198,6 @@ function editAdmin() {
     });
 }
 
-// Editar usuario normal
 function editUser(user, data) {
     const modal=document.createElement('div');
     modal.style.position='fixed'; modal.style.top='0'; modal.style.left='0';
@@ -245,6 +241,8 @@ function deleteUser(user){
 }
 
 function logout(){
+    const user = localStorage.getItem("currentUser");
+    connectedRef.child(user).remove();
     localStorage.removeItem("currentUser");
     window.location.href="index.html";
 }
