@@ -6,30 +6,29 @@
 <title>Administración de Usuarios</title>
 <style>
 body { font-family: Arial, sans-serif; padding: 20px; position: relative; }
-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; margin-top: 60px; margin-bottom: 20px; }
 th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
 button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 .checklist { margin: 10px 0; }
 .checklist label { display: block; margin: 5px 0; }
-#opButton {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: darkred;
-  color: white;
-  font-weight: bold;
-  padding: 8px 12px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-}
+.topButtons { position: absolute; top: 10px; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.topButtons button { padding:8px 12px; border-radius:5px; border:none; cursor:pointer; color:white; font-weight:bold; }
+#backButton { background: gray; }
+#opButton { background: darkred; }
+#logoutButton { background: black; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
+
+<div class="topButtons">
+    <button id="backButton" onclick="window.location.href='index.html'">Volver</button>
+    <button id="opButton" onclick="editAdmin()">OP</button>
+    <button id="logoutButton" onclick="logout()">Cerrar sesión</button>
+</div>
+
 <h2>Gestión de Usuarios</h2>
-<button id="opButton" onclick="editAdmin()">OP</button>
 
 <table id="userTable">
 <tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>
@@ -42,9 +41,6 @@ button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 <div id="newUserPages" class="checklist"></div>
 
 <button onclick="addUser()">Añadir usuario</button>
-
-<br><br>
-<button onclick="logout()">Cerrar sesión</button>
 
 <script>
 // === CONFIGURACIÓN FIREBASE ===
@@ -171,8 +167,7 @@ function editAdmin() {
                 <label>Nueva contraseña:</label>
                 <input type="text" id="adminPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
                 <label>Páginas:</label>
-                <div id="adminPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;">
-                </div>
+                <div id="adminPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;"></div>
                 <div style="text-align:right;">
                     <button id="cancelAdmin" style="margin-right:10px; background:gray; color:white;">Cancelar</button>
                     <button id="saveAdmin" style="background:green; color:white;">Guardar</button>
