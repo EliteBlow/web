@@ -78,6 +78,14 @@ window.onload = function() {
         renderPageChecklist('newUserPages');
         renderChat();
     });
+
+    // Enviar mensaje con Enter
+    document.getElementById('chatInput').addEventListener('keypress', function(e){
+        if(e.key === 'Enter'){
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 };
 
 function renderPageChecklist(containerId, selectedPages = []) {
