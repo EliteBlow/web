@@ -56,6 +56,7 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const usersRef = database.ref('users');
 
+// Lista de páginas disponibles
 const availablePages = ["multi.html", "ss.html", "vote.html", "admin.html"];
 
 window.onload = function() {
@@ -69,6 +70,7 @@ window.onload = function() {
     }
 };
 
+// Generar checkboxes dinámicos
 function renderPageChecklist(containerId, selectedPages = []) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -84,7 +86,7 @@ function renderPageChecklist(containerId, selectedPages = []) {
     });
 }
 
-// Tabla de usuarios, sin admin
+// Mostrar usuarios normales (sin admin)
 function renderUsers() {
     const table = document.getElementById("userTable");
     table.innerHTML = '<tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>';
@@ -93,7 +95,7 @@ function renderUsers() {
         snapshot.forEach(childSnap => {
             const user = childSnap.key;
             const data = childSnap.val();
-            if(user === "admin") return;
+            if(user === "admin") return; // ocultar admin
 
             const row = table.insertRow();
             row.insertCell(0).textContent = user;
@@ -101,7 +103,6 @@ function renderUsers() {
             row.insertCell(2).textContent = data.pages.join(", ");
 
             const actions = row.insertCell(3);
-
             const editBtn = document.createElement("button");
             editBtn.textContent = "Editar";
             editBtn.onclick = () => editUser(user, data);
@@ -115,6 +116,7 @@ function renderUsers() {
     });
 }
 
+// Añadir nuevo usuario
 function addUser() {
     const username = document.getElementById("newUser").value.trim();
     const password = document.getElementById("newPass").value.trim();
@@ -135,12 +137,21 @@ function addUser() {
     renderPageChecklist('newUserPages');
 }
 
-// Modal para editar admin
+// Editar usuario admin con PIN
 function editAdmin() {
+    const inputPin = prompt("Introduce el PIN de seguridad para editar ADMIN:");
+
     usersRef.child("admin").once('value', snapshot => {
         if (!snapshot.exists()) { alert("No se encontró admin."); return; }
         const data = snapshot.val();
+        const storedPin = data.pin ? atob(data.pin) : "1234"; // PIN por defecto
 
+        if(inputPin !== storedPin){
+            alert("PIN incorrecto. Acceso denegado.");
+            return;
+        }
+
+        // Modal admin
         const modal = document.createElement('div');
         modal.style.position='fixed'; modal.style.top='0'; modal.style.left='0';
         modal.style.width='100%'; modal.style.height='100%';
@@ -151,10 +162,12 @@ function editAdmin() {
         modal.innerHTML = `
             <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:100%;">
                 <h3>Editar ADMIN</h3>
-                <label>Nueva contraseña:</label>
+                <label>Contraseña:</label>
                 <input type="text" id="adminPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
                 <label>Páginas:</label>
                 <div id="adminPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;"></div>
+                <label>NUEVO PIN:</label>
+                <input type="text" id="adminPin" value="${data.pin ? atob(data.pin) : ''}" style="width:100%; margin-bottom:10px; padding:5px;">
                 <div style="text-align:right;">
                     <button id="cancelAdmin" style="margin-right:10px; background:gray; color:white;">Cancelar</button>
                     <button id="saveAdmin" style="background:green; color:white;">Guardar</button>
@@ -169,16 +182,21 @@ function editAdmin() {
         document.getElementById('saveAdmin').onclick = () => {
             const newPassword = document.getElementById('adminPassword').value.trim();
             const newPages = Array.from(document.querySelectorAll('#adminPages input:checked')).map(cb=>cb.value);
+            const newPin = document.getElementById('adminPin').value.trim();
+
             if(!newPassword){ alert("La contraseña no puede estar vacía."); return; }
 
-            usersRef.child("admin").update({ password:btoa(newPassword), pages:newPages })
-            .then(()=>{ alert("Admin actualizado."); modal.remove(); })
-            .catch(err=>alert("Error: "+err.message));
+            usersRef.child("admin").update({
+                password: btoa(newPassword),
+                pages: newPages,
+                pin: btoa(newPin)
+            }).then(()=>{ alert("Admin actualizado."); modal.remove(); })
+              .catch(err=>alert("Error: "+err.message));
         };
     });
 }
 
-// Modal para editar usuario normal
+// Editar usuario normal
 function editUser(user, data) {
     const modal=document.createElement('div');
     modal.style.position='fixed'; modal.style.top='0'; modal.style.left='0';
