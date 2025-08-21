@@ -29,7 +29,7 @@ button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 </head>
 <body>
 <h2>Gestión de Usuarios</h2>
-<button id="opButton" onclick="enableAdminEdit()">OP</button>
+<button id="opButton" onclick="editAdmin()">OP</button>
 
 <table id="userTable">
 <tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>
@@ -64,9 +64,6 @@ const usersRef = database.ref('users');
 // === LISTA DE PÁGINAS DISPONIBLES ===
 const availablePages = ["multi.html", "ss.html", "vote.html", "admin.html"];
 
-// === CONTROL DE EDICIÓN DEL ADMIN ===
-let adminEditEnabled = false;
-
 // === INICIO ===
 window.onload = function() {
     const currentUser = localStorage.getItem("currentUser");
@@ -78,13 +75,6 @@ window.onload = function() {
         renderPageChecklist('newUserPages');
     }
 };
-
-// === HABILITAR EDICIÓN DEL ADMIN ===
-function enableAdminEdit() {
-    adminEditEnabled = true;
-    alert("Edición de ADMIN habilitada.");
-    renderUsers();
-}
 
 // === GENERAR CHECKBOXES DINÁMICOS ===
 function renderPageChecklist(containerId, selectedPages = []) {
@@ -102,7 +92,7 @@ function renderPageChecklist(containerId, selectedPages = []) {
     });
 }
 
-// === MOSTRAR USUARIOS ===
+// === MOSTRAR USUARIOS (SIN ADMIN) ===
 function renderUsers() {
     const table = document.getElementById("userTable");
     table.innerHTML = '<tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>';
@@ -111,39 +101,24 @@ function renderUsers() {
         snapshot.forEach(childSnap => {
             const user = childSnap.key;
             const data = childSnap.val();
-            const row = table.insertRow();
+            if(user === "admin") return; // ocultar admin
 
+            const row = table.insertRow();
             row.insertCell(0).textContent = user;
             row.insertCell(1).textContent = atob(data.password);
             row.insertCell(2).textContent = data.pages.join(", ");
 
             const actions = row.insertCell(3);
 
-            // Botón editar
             const editBtn = document.createElement("button");
             editBtn.textContent = "Editar";
-
-            if (user === "admin" && !adminEditEnabled) {
-                editBtn.disabled = true;
-                editBtn.title = "Pulsa el botón OP para editar admin";
-            } else {
-                editBtn.onclick = () => editUser(user, data);
-            }
+            editBtn.onclick = () => editUser(user, data);
             actions.appendChild(editBtn);
 
-            // Botón eliminar
-            if (user !== "admin") {
-                const delBtn = document.createElement("button");
-                delBtn.textContent = "Eliminar";
-                delBtn.onclick = () => deleteUser(user);
-                actions.appendChild(delBtn);
-            } else {
-                const note = document.createElement("span");
-                note.style.color = "gray";
-                note.style.marginLeft = "10px";
-                note.textContent = "No se puede eliminar";
-                actions.appendChild(note);
-            }
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "Eliminar";
+            delBtn.onclick = () => deleteUser(user);
+            actions.appendChild(delBtn);
         });
     });
 }
@@ -169,9 +144,71 @@ function addUser() {
     renderPageChecklist('newUserPages');
 }
 
-// === EDITAR USUARIO ===
+// === EDITAR ADMIN (MODAL) ===
+function editAdmin() {
+    usersRef.child("admin").once('value', snapshot => {
+        if (!snapshot.exists()) {
+            alert("No se encontró el usuario admin.");
+            return;
+        }
+        const data = snapshot.val();
+
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+
+        modal.innerHTML = `
+            <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:100%;">
+                <h3>Editar cuenta ADMIN</h3>
+                <label>Nueva contraseña:</label>
+                <input type="text" id="adminPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
+                <label>Páginas:</label>
+                <div id="adminPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;">
+                </div>
+                <div style="text-align:right;">
+                    <button id="cancelAdmin" style="margin-right:10px; background:gray; color:white;">Cancelar</button>
+                    <button id="saveAdmin" style="background:green; color:white;">Guardar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        renderPageChecklist('adminPages', data.pages);
+
+        document.getElementById('cancelAdmin').onclick = () => modal.remove();
+
+        document.getElementById('saveAdmin').onclick = () => {
+            const newPassword = document.getElementById('adminPassword').value.trim();
+            const newPages = Array.from(document.querySelectorAll('#adminPages input:checked')).map(cb => cb.value);
+
+            if (!newPassword) {
+                alert("La contraseña no puede estar vacía.");
+                return;
+            }
+
+            usersRef.child("admin").update({
+                password: btoa(newPassword),
+                pages: newPages
+            }).then(() => {
+                alert("Cuenta admin actualizada.");
+                modal.remove();
+            }).catch(err => {
+                alert("Error al actualizar admin: " + err.message);
+            });
+        };
+    });
+}
+
+// === EDITAR USUARIO NORMAL ===
 function editUser(user, data) {
-    // Crear modal contenedor
     const modal = document.createElement('div');
     modal.style.position = 'fixed';
     modal.style.top = '0';
@@ -184,17 +221,13 @@ function editUser(user, data) {
     modal.style.alignItems = 'center';
     modal.style.zIndex = '1000';
 
-    // Contenido del modal
     modal.innerHTML = `
         <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:100%;">
             <h3>Editar usuario: ${user}</h3>
             <label>Nueva contraseña:</label>
             <input type="text" id="editPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
-            
             <label>Páginas:</label>
-            <div id="editUserPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;">
-            </div>
-
+            <div id="editUserPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;"></div>
             <div style="text-align:right;">
                 <button id="cancelEdit" style="margin-right:10px; background:gray; color:white;">Cancelar</button>
                 <button id="saveChanges" style="background:green; color:white;">Guardar</button>
@@ -203,15 +236,10 @@ function editUser(user, data) {
     `;
     document.body.appendChild(modal);
 
-    // Generar checkboxes con páginas existentes
     renderPageChecklist('editUserPages', data.pages);
 
-    // Botón cancelar
-    document.getElementById('cancelEdit').onclick = () => {
-        modal.remove();
-    };
+    document.getElementById('cancelEdit').onclick = () => modal.remove();
 
-    // Botón guardar
     document.getElementById('saveChanges').onclick = () => {
         const newPassword = document.getElementById('editPassword').value.trim();
         const newPages = Array.from(document.querySelectorAll('#editUserPages input:checked')).map(cb => cb.value);
@@ -250,5 +278,3 @@ function logout() {
 </script>
 </body>
 </html>
-
-
