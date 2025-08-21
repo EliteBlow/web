@@ -70,17 +70,19 @@ window.onload = function() {
             window.location.href = "index.html";
         } else {
             currentUserData = snapshot.val();
-            // Solo permite acceder a admin.html si tiene acceso
-            if(!currentUserData.pages.includes("admin.html")){
+            // ADMIN tiene acceso total automáticamente
+            if(currentUser !== "admin" && !currentUserData.pages.includes("admin.html")){
                 alert("No tienes permiso para acceder a esta página");
                 window.location.href = "index.html";
-            } else if(!currentUserData.isAdmin && currentUser !== "admin"){
+                return;
+            }
+            if(currentUser !== "admin" && !currentUserData.isAdmin){
                 alert("Solo administradores pueden acceder");
                 window.location.href = "index.html";
-            } else {
-                renderUsers();
-                renderPageChecklist('newUserPages');
+                return;
             }
+            renderUsers();
+            renderPageChecklist('newUserPages');
         }
     });
 };
@@ -107,11 +109,10 @@ function renderUsers() {
         snapshot.forEach(childSnap => {
             const user = childSnap.key;
             const data = childSnap.val();
-
+            if(user === "admin") return; // admin no se muestra
             const row = table.insertRow();
             row.insertCell(0).textContent = user;
 
-            // Contraseña oculta con botón mostrar
             const passCell = row.insertCell(1);
             passCell.style.display = "flex";
             passCell.style.alignItems = "center";
@@ -130,22 +131,17 @@ function renderUsers() {
 
             row.insertCell(2).textContent = data.pages.join(", ");
 
-            // Administrador
             const adminCell = row.insertCell(3);
-            if(currentUser === "admin"){ // solo admin puede cambiar rango
+            if(currentUser === "admin"){
                 const adminCheckbox = document.createElement("input");
                 adminCheckbox.type = "checkbox";
                 adminCheckbox.checked = data.isAdmin || false;
-                adminCheckbox.onclick = () => {
-                    if(user === "admin"){ alert("No puedes cambiar el rango de admin principal"); adminCheckbox.checked=true; return;}
-                    usersRef.child(user).update({ isAdmin: adminCheckbox.checked });
-                };
+                adminCheckbox.onclick = () => usersRef.child(user).update({ isAdmin: adminCheckbox.checked });
                 adminCell.appendChild(adminCheckbox);
             } else {
                 adminCell.textContent = data.isAdmin ? "Sí" : "No";
             }
 
-            // Acciones
             const actions = row.insertCell(4);
             const editBtn = document.createElement("button");
             editBtn.textContent = "Editar";
@@ -155,10 +151,7 @@ function renderUsers() {
             const delBtn = document.createElement("button");
             delBtn.textContent = "Eliminar";
             delBtn.style.backgroundColor = "#DC3545";
-            delBtn.onclick = () => {
-                if(user==="admin"){ alert("No puedes eliminar el admin principal"); return; }
-                deleteUser(user);
-            };
+            delBtn.onclick = () => deleteUser(user);
             actions.appendChild(delBtn);
         });
     });
@@ -169,7 +162,7 @@ function addUser() {
     const password = document.getElementById("newPass").value.trim();
     const pages = Array.from(document.querySelectorAll('#newUserPages input:checked')).map(cb => cb.value);
     let isAdmin = false;
-    if(currentUser === "admin"){ // solo admin puede asignar rango
+    if(currentUser === "admin"){
         isAdmin = document.getElementById("newIsAdmin").checked;
     }
     if(!username || !password){ alert("Usuario y contraseña obligatorios"); return; }
@@ -181,9 +174,7 @@ function addUser() {
     if(currentUser==="admin"){ document.getElementById("newIsAdmin").checked=false; }
 }
 
-// editAdmin, editUser y logout siguen igual que antes, manteniendo la visualización de contraseñas
-// Solo cambia que ahora cualquier admin puede editar usuarios, pero no cambiar rango si no es admin principal
-// Puedes integrar tu código de modal de edición con botones Mostrar/Ocultar aquí
+// Aquí se pueden agregar las funciones editUser(), editAdmin() y deleteUser() como antes, manteniendo modales y mostrar/ocultar contraseñas
 
 function logout(){
     localStorage.removeItem("currentUser");
