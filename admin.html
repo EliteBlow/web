@@ -27,11 +27,6 @@ button { padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 5px; bo
     <button id="logoutButton" onclick="logout()">Cerrar sesión</button>
 </div>
 
-<h3 style="text-align:center;">Usuarios Conectados</h3>
-<table id="connectedTable" style="margin:auto;">
-    <tr><th>Usuario</th></tr>
-</table>
-
 <h2>Gestión de Usuarios</h2>
 <table id="userTable">
 <tr><th>Usuario</th><th>Contraseña</th><th>Páginas</th><th>Acciones</th></tr>
@@ -57,7 +52,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const usersRef = database.ref('users');
-const connectedRef = database.ref('connectedUsers');
 
 const availablePages = ["multi.html", "ss.html", "vote.html", "admin.html"];
 
@@ -69,8 +63,6 @@ window.onload = function() {
     } else {
         renderUsers();
         renderPageChecklist('newUserPages');
-        renderConnectedUsers();
-        connectedRef.on('value', renderConnectedUsers);
     }
 };
 
@@ -86,18 +78,6 @@ function renderPageChecklist(containerId, selectedPages = []) {
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(" " + page));
         container.appendChild(label);
-    });
-}
-
-function renderConnectedUsers() {
-    const table = document.getElementById("connectedTable");
-    table.innerHTML = '<tr><th>Usuario</th></tr>';
-    connectedRef.once('value', snapshot => {
-        snapshot.forEach(childSnap => {
-            const user = childSnap.key;
-            const row = table.insertRow();
-            row.insertCell(0).textContent = user;
-        });
     });
 }
 
@@ -147,7 +127,6 @@ function addUser() {
 
 function editAdmin() {
     const inputPin = prompt("Introduce el PIN de seguridad para editar ADMIN:");
-
     usersRef.child("admin").once('value', snapshot => {
         if (!snapshot.exists()) { alert("No se encontró admin."); return; }
         const data = snapshot.val();
@@ -241,8 +220,6 @@ function deleteUser(user){
 }
 
 function logout(){
-    const user = localStorage.getItem("currentUser");
-    connectedRef.child(user).remove();
     localStorage.removeItem("currentUser");
     window.location.href="index.html";
 }
