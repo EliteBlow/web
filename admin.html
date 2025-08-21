@@ -57,12 +57,26 @@ const availablePages = ["multi.html", "ss.html", "vote.html", "admin.html"];
 
 window.onload = function() {
     const currentUser = localStorage.getItem("currentUser");
-    if(currentUser !== "admin") {
-        alert("Acceso denegado");
+    if(!currentUser){
+        alert("Debes iniciar sesión");
         window.location.href = "index.html";
     } else {
-        renderUsers();
-        renderPageChecklist('newUserPages');
+        usersRef.child(currentUser).once('value', snapshot => {
+            if(!snapshot.exists()){
+                alert("Usuario no encontrado");
+                window.location.href = "index.html";
+            } else {
+                const data = snapshot.val();
+                if(!data.pages.includes("admin.html")){
+                    alert("No tienes permiso para acceder a esta página");
+                    window.location.href = "index.html";
+                } else {
+                    // Usuario permitido, carga normal
+                    renderUsers();
+                    renderPageChecklist('newUserPages');
+                }
+            }
+        });
     }
 };
 
@@ -204,6 +218,7 @@ function editAdmin() {
     });
 }
 
+// Funciones editUser, deleteUser y logout siguen igual
 function editUser(user, data) {
     const modal=document.createElement('div');
     modal.style.position='fixed'; modal.style.top='0'; modal.style.left='0';
@@ -261,4 +276,3 @@ function logout(){
 </script>
 </body>
 </html>
-
