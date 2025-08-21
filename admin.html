@@ -92,7 +92,31 @@ function renderUsers() {
 
             const row = table.insertRow();
             row.insertCell(0).textContent = user;
-            row.insertCell(1).textContent = atob(data.password);
+
+            // Contraseña oculta con botón mostrar
+            const passCell = row.insertCell(1);
+            passCell.style.display = "flex";
+            passCell.style.alignItems = "center";
+            passCell.style.gap = "5px";
+
+            const passSpan = document.createElement("span");
+            passSpan.textContent = "********"; // Oculta por defecto
+            passCell.appendChild(passSpan);
+
+            const showBtn = document.createElement("button");
+            showBtn.textContent = "Mostrar";
+            showBtn.style.backgroundColor = "#17A2B8"; // azul claro
+            showBtn.onclick = () => {
+                if(passSpan.textContent === "********") {
+                    passSpan.textContent = atob(data.password);
+                    showBtn.textContent = "Ocultar";
+                } else {
+                    passSpan.textContent = "********";
+                    showBtn.textContent = "Mostrar";
+                }
+            };
+            passCell.appendChild(showBtn);
+
             row.insertCell(2).textContent = data.pages.join(", ");
 
             const actions = row.insertCell(3);
@@ -145,7 +169,8 @@ function editAdmin() {
             <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:100%;">
                 <h3>Editar ADMIN</h3>
                 <label>Contraseña:</label>
-                <input type="text" id="adminPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
+                <input type="password" id="adminPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
+                <button id="toggleAdminPass" style="margin-bottom:10px; background:#17A2B8;">Mostrar</button>
                 <label>Páginas:</label>
                 <div id="adminPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;"></div>
                 <label>NUEVO PIN:</label>
@@ -159,19 +184,21 @@ function editAdmin() {
         document.body.appendChild(modal);
         renderPageChecklist('adminPages', data.pages);
 
+        const toggleBtn = document.getElementById('toggleAdminPass');
+        const passInput = document.getElementById('adminPassword');
+        toggleBtn.onclick = () => {
+            if(passInput.type === "password") { passInput.type="text"; toggleBtn.textContent="Ocultar"; }
+            else { passInput.type="password"; toggleBtn.textContent="Mostrar"; }
+        };
+
         document.getElementById('cancelAdmin').onclick = () => modal.remove();
         document.getElementById('saveAdmin').onclick = () => {
             const newPassword = document.getElementById('adminPassword').value.trim();
             const newPages = Array.from(document.querySelectorAll('#adminPages input:checked')).map(cb=>cb.value);
             const newPin = document.getElementById('adminPin').value.trim();
-
             if(!newPassword){ alert("La contraseña no puede estar vacía."); return; }
-
-            usersRef.child("admin").update({
-                password: btoa(newPassword),
-                pages: newPages,
-                pin: btoa(newPin)
-            }).then(()=>{ alert("Admin actualizado."); modal.remove(); })
+            usersRef.child("admin").update({ password: btoa(newPassword), pages: newPages, pin: btoa(newPin) })
+              .then(()=>{ alert("Admin actualizado."); modal.remove(); })
               .catch(err=>alert("Error: "+err.message));
         };
     });
@@ -189,7 +216,8 @@ function editUser(user, data) {
         <div style="background:white; padding:20px; border-radius:10px; max-width:400px; width:100%;">
             <h3>Editar usuario: ${user}</h3>
             <label>Contraseña:</label>
-            <input type="text" id="editPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
+            <input type="password" id="editPassword" value="${atob(data.password)}" style="width:100%; margin-bottom:10px; padding:5px;">
+            <button id="toggleUserPass" style="margin-bottom:10px; background:#17A2B8;">Mostrar</button>
             <label>Páginas:</label>
             <div id="editUserPages" style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;"></div>
             <div style="text-align:right;">
@@ -200,6 +228,13 @@ function editUser(user, data) {
     `;
     document.body.appendChild(modal);
     renderPageChecklist('editUserPages', data.pages);
+
+    const toggleBtn = document.getElementById('toggleUserPass');
+    const passInput = document.getElementById('editPassword');
+    toggleBtn.onclick = () => {
+        if(passInput.type === "password") { passInput.type="text"; toggleBtn.textContent="Ocultar"; }
+        else { passInput.type="password"; toggleBtn.textContent="Mostrar"; }
+    };
 
     document.getElementById('cancelEdit').onclick = ()=>modal.remove();
     document.getElementById('saveChanges').onclick = ()=>{
