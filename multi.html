@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Formulario con persistencia y exportación</title>
+<title>Formulario con persistencia, exportación e importación</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 2rem; display: flex; flex-direction: column; align-items: center; }
   form { max-width: 520px; width: 100%; display: grid; gap: 1rem; margin-bottom: 2rem; }
@@ -77,12 +77,16 @@
 
 <div class="actions">
   <button type="button" id="export-excel">Exportar a Excel</button>
+  <button type="button" id="import-xlsx">Importar desde Excel</button>
+  <input type="file" id="file-input" accept=".xlsx" style="display:none">
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const form = document.getElementById('form-add');
 const tabla = document.querySelector('#tabla-registros tbody');
+const fileInput = document.getElementById('file-input');
+const importBtn = document.getElementById('import-xlsx');
 let registros = [];
 
 // Cargar registros guardados en localStorage al iniciar
@@ -164,6 +168,37 @@ document.getElementById('export-excel').addEventListener('click', () => {
 
   XLSX.utils.book_append_sheet(wb, ws, 'Registros');
   XLSX.writeFile(wb, 'registros.xlsx');
+});
+
+// Importar desde Excel
+importBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const data = new Uint8Array(event.target.result);
+    const wb = XLSX.read(data, { type: 'array' });
+    const wsName = wb.SheetNames[0];
+    const ws = wb.Sheets[wsName];
+    const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+    json.forEach(row => {
+      const nick1 = row['Nick 1'] || '';
+      const nick2 = row['Nick 2'] || '';
+      const nick3 = row['Nick 3'] || '';
+      const condicion = row['Condición'] || '';
+      if (nick1 && condicion) {
+        registros.push({ nick1, nick2, nick3, condicion });
+      }
+    });
+
+    guardarRegistros();
+    renderTabla();
+  };
+  reader.readAsArrayBuffer(file);
 });
 
 // Inicializar
