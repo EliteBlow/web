@@ -95,7 +95,7 @@ function renderUsers() {
         snapshot.forEach(childSnap => {
             const user = childSnap.key;
             const data = childSnap.val();
-            if(user === "admin") return; // ocultar admin
+            if(user === "admin") return;
 
             const row = table.insertRow();
             row.insertCell(0).textContent = user;
@@ -103,27 +103,20 @@ function renderUsers() {
             row.insertCell(2).textContent = data.pages.join(", ");
 
             const actions = row.insertCell(3);
-            const editBtn = document.createElement("button");
-editBtn.textContent = "Editar";
-editBtn.style.backgroundColor = "#007BFF"; // azul brillante
-editBtn.style.color = "white";
-editBtn.style.border = "none";
-editBtn.style.padding = "5px 10px";
-editBtn.style.borderRadius = "5px";
-editBtn.style.cursor = "pointer";
-editBtn.onclick = () => editUser(user, data);
-actions.appendChild(editBtn);
 
-const delBtn = document.createElement("button");
-delBtn.textContent = "Eliminar";
-delBtn.style.backgroundColor = "#DC3545"; // rojo brillante
-delBtn.style.color = "white";
-delBtn.style.border = "none";
-delBtn.style.padding = "5px 10px";
-delBtn.style.borderRadius = "5px";
-delBtn.style.cursor = "pointer";
-delBtn.onclick = () => deleteUser(user);
-actions.appendChild(delBtn);
+            // Botón Editar azul
+            const editBtn = document.createElement("button");
+            editBtn.textContent = "Editar";
+            editBtn.style.backgroundColor = "#007BFF";
+            editBtn.onclick = () => editUser(user, data);
+            actions.appendChild(editBtn);
+
+            // Botón Eliminar rojo
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "Eliminar";
+            delBtn.style.backgroundColor = "#DC3545";
+            delBtn.onclick = () => deleteUser(user);
+            actions.appendChild(delBtn);
         });
     });
 }
@@ -156,7 +149,7 @@ function editAdmin() {
     usersRef.child("admin").once('value', snapshot => {
         if (!snapshot.exists()) { alert("No se encontró admin."); return; }
         const data = snapshot.val();
-        const storedPin = data.pin ? atob(data.pin) : "1234"; // PIN por defecto
+        const storedPin = data.pin ? atob(data.pin) : "Taru85"; // PIN por defecto
 
         if(inputPin !== storedPin){
             alert("PIN incorrecto. Acceso denegado.");
@@ -258,4 +251,3 @@ function logout(){
 </script>
 </body>
 </html>
-
