@@ -104,14 +104,26 @@ function renderUsers() {
 
             const actions = row.insertCell(3);
             const editBtn = document.createElement("button");
-            editBtn.textContent = "Editar";
-            editBtn.onclick = () => editUser(user, data);
-            actions.appendChild(editBtn);
+editBtn.textContent = "Editar";
+editBtn.style.backgroundColor = "#007BFF"; // azul brillante
+editBtn.style.color = "white";
+editBtn.style.border = "none";
+editBtn.style.padding = "5px 10px";
+editBtn.style.borderRadius = "5px";
+editBtn.style.cursor = "pointer";
+editBtn.onclick = () => editUser(user, data);
+actions.appendChild(editBtn);
 
-            const delBtn = document.createElement("button");
-            delBtn.textContent = "Eliminar";
-            delBtn.onclick = () => deleteUser(user);
-            actions.appendChild(delBtn);
+const delBtn = document.createElement("button");
+delBtn.textContent = "Eliminar";
+delBtn.style.backgroundColor = "#DC3545"; // rojo brillante
+delBtn.style.color = "white";
+delBtn.style.border = "none";
+delBtn.style.padding = "5px 10px";
+delBtn.style.borderRadius = "5px";
+delBtn.style.cursor = "pointer";
+delBtn.onclick = () => deleteUser(user);
+actions.appendChild(delBtn);
         });
     });
 }
@@ -246,3 +258,4 @@ function logout(){
 </script>
 </body>
 </html>
+
