@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Registros</title>
+  <title>Sistema de gestión de Multicuentas</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -44,7 +44,7 @@
     }
     table {
       width: 100%;
-      max-width: 900px;
+      max-width: 1000px;
       margin: auto;
       border-collapse: collapse;
       background: white;
@@ -99,7 +99,7 @@
   </style>
 </head>
 <body>
-  <h1>Gestión de Registros</h1>
+  <h1>Gestión de Multicuentas</h1>
 
   <!-- Estado de conexión -->
   <p style="text-align:center;">
@@ -109,10 +109,14 @@
 
   <!-- Formulario -->
   <form id="registro-form">
-    <input type="text" id="nick" placeholder="Nick" required />
+    <input type="text" id="nick1" placeholder="Nick 1" required />
+    <input type="text" id="nick2" placeholder="Nick 2" />
+    <input type="text" id="nick3" placeholder="Nick 3" />
     <select id="condicion">
-      <option value="Activo">Activo</option>
-      <option value="Inactivo">Inactivo</option>
+      <option value="Amigos">Amigos</option>
+      <option value="Familiares">Familiares</option>
+      <option value="Novios">Novios</option>
+      <option value="Multicuenta">Multicuenta</option>
     </select>
     <button type="submit">Agregar</button>
   </form>
@@ -129,7 +133,9 @@
   <table id="tabla-registros">
     <thead>
       <tr>
-        <th>Nick</th>
+        <th>Nick 1</th>
+        <th>Nick 2</th>
+        <th>Nick 3</th>
         <th>Condición</th>
         <th>Acciones</th>
       </tr>
@@ -137,14 +143,13 @@
     <tbody></tbody>
   </table>
 
-  <!-- Firebase -->
+  <!-- Firebase y librerías -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <!-- Librería para Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    // ---- Configuración Firebase ----
+    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
       authDomain: "et-accounts.firebaseapp.com",
@@ -154,7 +159,6 @@
       messagingSenderId: "1006439185867",
       appId: "1:1006439185867:web:ee9221150be923340e4a4e"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const registrosRef = db.ref('registros');
@@ -163,7 +167,7 @@
     const estadoTexto = document.getElementById('estado-texto');
     const pillDot = document.querySelector('.pill-dot');
 
-    // ---- Estado de conexión ----
+    // Estado de conexión
     db.ref(".info/connected").on("value", snap => {
       if (snap.val() === true) {
         estadoTexto.textContent = "Firebase Realtime (conectado)";
@@ -176,7 +180,7 @@
       }
     });
 
-    // ---- Mostrar registros ----
+    // Mostrar registros
     function mostrarRegistros(snapshot) {
       tablaBody.innerHTML = "";
       snapshot.forEach(child => {
@@ -184,7 +188,9 @@
         const data = child.val();
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${data.nick}</td>
+          <td>${data.nick1 || ''}</td>
+          <td>${data.nick2 || ''}</td>
+          <td>${data.nick3 || ''}</td>
           <td>${data.condicion}</td>
           <td class="actions">
             <button onclick="editarRegistro('${key}')">Editar</button>
@@ -194,48 +200,62 @@
         tablaBody.appendChild(row);
       });
     }
-
     registrosRef.on('value', mostrarRegistros);
 
-    // ---- Agregar registro ----
+    // Agregar registro
     document.getElementById('registro-form').addEventListener('submit', e => {
       e.preventDefault();
-      const nick = document.getElementById('nick').value.trim();
+      const nick1 = document.getElementById('nick1').value.trim();
+      const nick2 = document.getElementById('nick2').value.trim();
+      const nick3 = document.getElementById('nick3').value.trim();
       const condicion = document.getElementById('condicion').value;
-      if (!nick) return;
-      registrosRef.push({ nick, condicion });
+      if (!nick1) return;
+      registrosRef.push({ nick1, nick2, nick3, condicion });
       e.target.reset();
     });
 
-    // ---- Editar registro ----
+    // Editar registro
     window.editarRegistro = function (key) {
-      const nuevoNick = prompt('Nuevo nick:');
-      if (nuevoNick) {
-        registrosRef.child(key).update({ nick: nuevoNick });
+      const nuevoNick1 = prompt('Nuevo Nick 1:');
+      const nuevoNick2 = prompt('Nuevo Nick 2 (opcional):');
+      const nuevoNick3 = prompt('Nuevo Nick 3 (opcional):');
+      const nuevaCondicion = prompt('Nueva condición (Amigos, Familiares, Novios, Multicuenta):');
+      if (nuevoNick1 && nuevaCondicion) {
+        registrosRef.child(key).update({
+          nick1: nuevoNick1,
+          nick2: nuevoNick2 || '',
+          nick3: nuevoNick3 || '',
+          condicion: nuevaCondicion
+        });
       }
     };
 
-    // ---- Borrar registro ----
+    // Borrar registro
     window.borrarRegistro = function (key) {
       if (confirm('¿Seguro que deseas borrar este registro?')) {
         registrosRef.child(key).remove();
       }
     };
 
-    // ---- Borrar todo ----
+    // Borrar todos los registros
     document.getElementById('borrar-todo').addEventListener('click', () => {
       if (confirm('¿Seguro que deseas borrar TODOS los registros?')) {
         registrosRef.remove();
       }
     });
 
-    // ---- Exportar a Excel ----
+    // Exportar a Excel
     document.getElementById('exportar-excel').addEventListener('click', () => {
       registrosRef.once('value', snapshot => {
         const data = [];
         snapshot.forEach(child => {
           const val = child.val();
-          data.push({ Nick: val.nick, Condición: val.condicion });
+          data.push({
+            "Nick 1": val.nick1,
+            "Nick 2": val.nick2,
+            "Nick 3": val.nick3,
+            "Condición": val.condicion
+          });
         });
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
@@ -244,7 +264,7 @@
       });
     });
 
-    // ---- Importar desde Excel ----
+    // Importar desde Excel
     const fileInput = document.getElementById('importar-excel');
     document.getElementById('boton-importar').addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
@@ -257,9 +277,12 @@
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(firstSheet);
         rows.forEach(row => {
-          if (row.Nick && row.Condición) {
-            registrosRef.push({ nick: row.Nick, condicion: row.Condición });
-          }
+          registrosRef.push({
+            nick1: row["Nick 1"] || '',
+            nick2: row["Nick 2"] || '',
+            nick3: row["Nick 3"] || '',
+            condicion: row["Condición"] || 'Amigos'
+          });
         });
       };
       reader.readAsArrayBuffer(file);
