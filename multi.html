@@ -40,7 +40,8 @@
       display: flex;
       justify-content: center;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
     }
     table {
       width: 100%;
@@ -96,6 +97,9 @@
       font-weight: bold;
       color: #555;
     }
+    #buscar-nick {
+      padding:8px; width:300px; font-size:14px; border:1px solid #ccc; border-radius:5px; margin:0 auto 15px; display:block;
+    }
   </style>
 </head>
 <body>
@@ -129,6 +133,9 @@
     <button id="borrar-todo" style="background-color:#f44336;">Borrar todo</button>
   </div>
 
+  <!-- Campo de búsqueda -->
+  <input type="text" id="buscar-nick" placeholder="Buscar por Nick 1, Nick 2 o Nick 3">
+
   <!-- Tabla -->
   <table id="tabla-registros">
     <thead>
@@ -149,7 +156,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
       authDomain: "et-accounts.firebaseapp.com",
@@ -166,6 +172,7 @@
     const tablaBody = document.querySelector('#tabla-registros tbody');
     const estadoTexto = document.getElementById('estado-texto');
     const pillDot = document.querySelector('.pill-dot');
+    const inputBuscar = document.getElementById('buscar-nick');
 
     // Estado de conexión
     db.ref(".info/connected").on("value", snap => {
@@ -180,27 +187,40 @@
       }
     });
 
-    // Mostrar registros
-    function mostrarRegistros(snapshot) {
+    // Mostrar registros filtrando
+    function mostrarRegistros(snapshot, filtro='') {
       tablaBody.innerHTML = "";
       snapshot.forEach(child => {
         const key = child.key;
         const data = child.val();
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${data.nick1 || ''}</td>
-          <td>${data.nick2 || ''}</td>
-          <td>${data.nick3 || ''}</td>
-          <td>${data.condicion}</td>
-          <td class="actions">
-            <button onclick="editarRegistro('${key}')">Editar</button>
-            <button class="delete" onclick="borrarRegistro('${key}')">Eliminar</button>
-          </td>
-        `;
-        tablaBody.appendChild(row);
+        if (
+          data.nick1.toLowerCase().includes(filtro) ||
+          (data.nick2||'').toLowerCase().includes(filtro) ||
+          (data.nick3||'').toLowerCase().includes(filtro)
+        ) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${data.nick1}</td>
+            <td>${data.nick2}</td>
+            <td>${data.nick3}</td>
+            <td>${data.condicion}</td>
+            <td class="actions">
+              <button onclick="editarRegistro('${key}')">Editar</button>
+              <button class="delete" onclick="borrarRegistro('${key}')">Eliminar</button>
+            </td>
+          `;
+          tablaBody.appendChild(row);
+        }
       });
     }
-    registrosRef.on('value', mostrarRegistros);
+
+    // Suscripción en tiempo real
+    registrosRef.on('value', snapshot => mostrarRegistros(snapshot, inputBuscar.value.toLowerCase()));
+
+    // Buscar en tiempo real
+    inputBuscar.addEventListener('input', () => {
+      registrosRef.once('value', snapshot => mostrarRegistros(snapshot, inputBuscar.value.toLowerCase()));
+    });
 
     // Agregar registro
     document.getElementById('registro-form').addEventListener('submit', e => {
@@ -237,7 +257,7 @@
       }
     };
 
-    // Borrar todos los registros
+    // Borrar todos
     document.getElementById('borrar-todo').addEventListener('click', () => {
       if (confirm('¿Seguro que deseas borrar TODOS los registros?')) {
         registrosRef.remove();
