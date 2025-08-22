@@ -1,0 +1,194 @@
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+
+<script>
+  // 1. CONFIGURAR FIREBASE (pega aquí tu configuración)
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://TU_PROJECT_ID.firebaseio.com",
+    projectId: "TU_PROJECT_ID",
+    storageBucket: "TU_PROJECT_ID.appspot.com",
+    messagingSenderId: "ID",
+    appId: "APP_ID"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const sancionesRef = db.ref("sanciones");
+
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('empty');
+  const drawer = document.getElementById('drawer');
+  const form = document.getElementById('form');
+  const buscar = document.getElementById('buscar');
+  const filtroEstado = document.getElementById('filtroEstado');
+
+  const registroId = document.getElementById('registroId');
+  const nombre = document.getElementById('nombre');
+  const tipo = document.getElementById('tipo');
+  const durabilidad = document.getElementById('durabilidad');
+  const inicio = document.getElementById('inicio');
+  const fin = document.getElementById('fin');
+  const obs = document.getElementById('obs');
+
+  const btnAbrir = document.getElementById('btnAbrir');
+  const btnCerrar = document.getElementById('btnCerrar');
+
+  let datos = {};
+  let sortBy = 'inicio';
+  let sortDir = 'desc';
+
+  const pad = n => String(n).padStart(2, '0');
+  const addDays = (date, days) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + Number(days || 0));
+    return d;
+  };
+  const toDateInputValue = d =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const format = d =>
+    d ? new Date(d).toLocaleDateString('es-ES', {year:'numeric', month:'2-digit', day:'2-digit'}) : '';
+  const estadoDe = (inicio, fin) => {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const f = new Date(fin); f.setHours(0,0,0,0);
+    return (f >= hoy) ? 'vigente' : 'expirada';
+  };
+
+  function openDrawer(editItem) {
+    drawer.classList.add('open');
+    if (editItem) {
+      document.getElementById('drawerTitle').textContent = 'Editar sanción';
+      registroId.value = editItem.id;
+      nombre.value = editItem.nombre;
+      tipo.value = editItem.tipo;
+      durabilidad.value = editItem.durabilidad;
+      inicio.value = editItem.inicio;
+      fin.value = editItem.fin;
+      obs.value = editItem.obs || '';
+    } else {
+      document.getElementById('drawerTitle').textContent = 'Añadir sanción';
+      form.reset();
+      registroId.value = '';
+      const hoy = new Date();
+      inicio.value = toDateInputValue(hoy);
+      durabilidad.value = 0;
+      fin.value = toDateInputValue(hoy);
+    }
+    nombre.focus();
+  }
+  const closeDrawer = () => drawer.classList.remove('open');
+
+  function updateFin() {
+    if (!inicio.value) return;
+    const f = addDays(inicio.value, parseInt(durabilidad.value || 0));
+    fin.value = toDateInputValue(f);
+  }
+  inicio.addEventListener('change', updateFin);
+  durabilidad.addEventListener('input', updateFin);
+
+  function render() {
+    const q = (buscar.value || '').toLowerCase();
+    const filt = filtroEstado.value;
+
+    let lista = Object.values(datos);
+
+    lista = lista.filter(r =>
+      [r.nombre, r.tipo, r.obs].join(' ').toLowerCase().includes(q)
+    );
+    if (filt !== 'todos') lista = lista.filter(r => r.estado === filt);
+
+    lista.sort((a, b) => {
+      const A = a[sortBy], B = b[sortBy];
+      if (sortBy === 'durabilidad') return (sortDir === 'asc' ? 1 : -1) * (A - B);
+      if (['inicio', 'fin'].includes(sortBy))
+        return (sortDir === 'asc' ? 1 : -1) * (new Date(A) - new Date(B));
+      return (sortDir === 'asc' ? 1 : -1) * String(A).localeCompare(String(B), 'es');
+    });
+
+    tbody.innerHTML = '';
+    lista.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${r.nombre}</td>
+        <td>${r.tipo}</td>
+        <td class="right">${r.durabilidad}</td>
+        <td>${format(r.inicio)}</td>
+        <td>${format(r.fin)}</td>
+        <td><span class="chip ${r.estado}">${r.estado.toUpperCase()}</span></td>
+        <td>${r.obs || ''}</td>
+        <td class="right">
+          <button class="ghost" data-edit="${r.id}">✏️</button>
+          <button class="danger" data-del="${r.id}">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    empty.style.display = lista.length ? 'none' : 'block';
+
+    tbody.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-edit');
+        openDrawer(datos[id]);
+      });
+    });
+    tbody.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-del');
+        if (confirm('¿Eliminar este registro?')) {
+          sancionesRef.child(id).remove();
+        }
+      });
+    });
+  }
+
+  // Listener en tiempo real
+  sancionesRef.on('value', snapshot => {
+    datos = snapshot.val() || {};
+    render();
+  });
+
+  // Guardar/editar sanción
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    updateFin();
+    const id = registroId.value || Date.now().toString();
+    const item = {
+      id,
+      nombre: nombre.value.trim(),
+      tipo: tipo.value,
+      durabilidad: Number(durabilidad.value || 0),
+      inicio: inicio.value,
+      fin: fin.value,
+      estado: estadoDe(inicio.value, fin.value),
+      obs: obs.value.trim()
+    };
+    if (!item.nombre || !item.inicio) {
+      alert('Nombre e inicio son obligatorios.');
+      return;
+    }
+    sancionesRef.child(id).set(item);
+    closeDrawer();
+  });
+
+  buscar.addEventListener('input', render);
+  filtroEstado.addEventListener('change', render);
+  btnAbrir.addEventListener('click', () => openDrawer());
+  btnCerrar.addEventListener('click', closeDrawer);
+  drawer.addEventListener('click', e => { if (e.target === drawer) closeDrawer(); });
+
+  // Ordenar columnas
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', () => {
+      const key = th.getAttribute('data-sort');
+      if (sortBy === key) sortDir = (sortDir === 'asc' ? 'desc' : 'asc');
+      else { sortBy = key; sortDir = 'asc'; }
+      render();
+    });
+  });
+</script>
