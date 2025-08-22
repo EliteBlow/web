@@ -89,7 +89,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+<script src="auth.js"></script>
+  
 <script>
   const firebaseConfig = { 
     apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
@@ -230,12 +231,10 @@
   database.ref('nicks').on('child_changed', snapshot=>{
     if(snapshot.key===currentNickKey) renderNotes(snapshot.val().notes||{});
   });
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="auth.js"></script>
 </script>
 </body>
 </html>
+
 
 
 
