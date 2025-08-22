@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestor de Sanciones con Realtime Database</title>
+  <title>Gestor de Sanciones con Firebase</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
 <body class="bg-gray-900 text-white">
   <div class="max-w-6xl mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Gestor de Sanciones</h1>
     <button id="btnAbrir" class="bg-green-500 px-4 py-2 rounded">Añadir sanción</button>
+
     <div class="overflow-x-auto mt-4">
       <table class="min-w-full border border-gray-700">
         <thead class="bg-gray-800">
@@ -55,9 +56,11 @@
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+    // Configuración de tu proyecto Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
       authDomain: "et-accounts.firebaseapp.com",
@@ -67,9 +70,10 @@
       messagingSenderId: "1006439185867",
       appId: "1:1006439185867:web:ee9221150be923340e4a4e"
     };
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const sancionesRef = db.ref("sanciones");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const sancionesRef = ref(db, "sanciones");
 
     const tbody = document.getElementById('tbody');
     const empty = document.getElementById('empty');
@@ -83,6 +87,7 @@
     const fin = document.getElementById('fin');
     const obs = document.getElementById('obs');
 
+    // Abrir modal
     document.getElementById('btnAbrir').onclick = () => {
       drawer.classList.remove('hidden');
       form.reset();
@@ -90,6 +95,7 @@
     };
     document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
 
+    // Funciones auxiliares
     function addDays(date, days) {
       const d = new Date(date);
       d.setDate(d.getDate() + Number(days || 0));
@@ -99,11 +105,14 @@
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
     function estadoDe(inicio, fin) {
-      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-      const f = new Date(fin); f.setHours(0, 0, 0, 0);
-      return (f >= hoy) ? 'vigente' : 'expirada';
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const f = new Date(fin);
+      f.setHours(0, 0, 0, 0);
+      return f >= hoy ? 'vigente' : 'expirada';
     }
 
+    // Calcular fin automáticamente
     durabilidad.oninput = () => {
       if (inicio.value) fin.value = toDateInputValue(addDays(inicio.value, durabilidad.value));
     };
@@ -111,7 +120,8 @@
       if (inicio.value) fin.value = toDateInputValue(addDays(inicio.value, durabilidad.value));
     };
 
-    form.onsubmit = (e) => {
+    // Guardar sanción
+    form.onsubmit = async (e) => {
       e.preventDefault();
       const id = registroId.value || Date.now().toString();
       const item = {
@@ -124,11 +134,12 @@
         estado: estadoDe(inicio.value, fin.value),
         obs: obs.value.trim()
       };
-      sancionesRef.child(id).set(item);
+      await set(ref(db, `sanciones/${id}`), item);
       drawer.classList.add('hidden');
     };
 
-    sancionesRef.on('value', (snapshot) => {
+    // Escuchar cambios en tiempo real
+    onValue(sancionesRef, (snapshot) => {
       const datos = snapshot.val() || {};
       const lista = Object.values(datos);
       tbody.innerHTML = '';
@@ -137,7 +148,7 @@
         return;
       }
       empty.classList.add('hidden');
-      lista.forEach(r => {
+      lista.forEach((r) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="px-3 py-2">${r.id}</td>
@@ -149,11 +160,16 @@
           <td class="px-3 py-2">${r.estado}</td>
           <td class="px-3 py-2">${r.obs}</td>
           <td class="px-3 py-2 text-right">
-            <button onclick="sancionesRef.child('${r.id}').remove()" class="bg-red-500 px-2 py-1 rounded">Eliminar</button>
+            <button class="bg-red-500 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
           </td>`;
         tbody.appendChild(tr);
       });
     });
+
+    // Eliminar sanción
+    window.eliminar = async (id) => {
+      await remove(ref(db, `sanciones/${id}`));
+    };
   </script>
 </body>
 </html>
