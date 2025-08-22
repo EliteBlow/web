@@ -4,96 +4,100 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestor de Sanciones</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-start min-h-screen p-4">
+<body class="bg-gray-900 text-white flex flex-col items-center p-6">
 
-  <!-- Indicador de conexión -->
-  <div id="estadoConexion" class="mb-4 text-sm px-3 py-1 rounded bg-gray-700">Conectando a la base de datos...</div>
+  <!-- Estado de conexión -->
+  <div id="status" class="mb-4 text-sm text-yellow-400">Conectando a Realtime Database...</div>
 
-  <div class="bg-gray-800 rounded-lg shadow-lg w-full max-w-6xl p-6">
-    <h1 class="text-2xl font-bold mb-4 text-center">Gestor de Sanciones</h1>
-    <div class="flex justify-center mb-4">
-      <button id="btnAbrir" class="bg-green-500 px-4 py-2 rounded">Añadir sanción</button>
-    </div>
+  <!-- Botón para añadir sanción -->
+  <button id="btnAbrir" class="mb-6 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded shadow">
+    Añadir Sanción
+  </button>
 
-    <!-- Tabla: Muteos y Advertencias -->
-    <h2 class="text-xl font-semibold mt-4 mb-2">Muteos y Advertencias</h2>
-    <div class="overflow-x-auto mb-6">
-      <table class="min-w-full border border-gray-700">
-        <thead class="bg-gray-800">
-          <tr>
+  <!-- Tablas de registros -->
+  <div class="w-full max-w-6xl space-y-8">
+
+    <!-- Tabla de Muteos y Advertencias -->
+    <div>
+      <h2 class="text-lg font-bold mb-2 text-center">Muteos, Advertencias y Kicks</h2>
+      <table class="w-full border-collapse bg-gray-800 rounded">
+        <thead>
+          <tr class="bg-gray-700">
+            <th class="px-3 py-2 text-left">ID</th>
             <th class="px-3 py-2 text-left">Sanción</th>
             <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-right">Durabilidad</th>
-            <th class="px-3 py-2 text-right">Acciones</th>
+            <th class="px-3 py-2 text-left">Durabilidad</th>
+            <th class="px-3 py-2 text-left">Acciones</th>
           </tr>
         </thead>
-        <tbody id="tbodyMuteos" class="divide-y divide-gray-700"></tbody>
+        <tbody id="tbodyMuteo"></tbody>
       </table>
-      <div id="emptyMuteos" class="text-center text-gray-400 py-4">No hay registros</div>
     </div>
 
-    <!-- Tabla: Baneos Temporales -->
-    <h2 class="text-xl font-semibold mt-4 mb-2">Baneos Temporales</h2>
-    <div class="overflow-x-auto mb-6">
-      <table class="min-w-full border border-gray-700">
-        <thead class="bg-gray-800">
-          <tr>
+    <!-- Tabla de Baneos Temporales -->
+    <div>
+      <h2 class="text-lg font-bold mb-2 text-center">Baneos Temporales</h2>
+      <table class="w-full border-collapse bg-gray-800 rounded">
+        <thead>
+          <tr class="bg-gray-700">
+            <th class="px-3 py-2 text-left">ID</th>
             <th class="px-3 py-2 text-left">Sanción</th>
             <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-right">Durabilidad</th>
-            <th class="px-3 py-2 text-right">Acciones</th>
+            <th class="px-3 py-2 text-left">Durabilidad</th>
+            <th class="px-3 py-2 text-left">Acciones</th>
           </tr>
         </thead>
-        <tbody id="tbodyTemp" class="divide-y divide-gray-700"></tbody>
+        <tbody id="tbodyBanTemp"></tbody>
       </table>
-      <div id="emptyTemp" class="text-center text-gray-400 py-4">No hay registros</div>
     </div>
 
-    <!-- Tabla: Baneos Permanentes -->
-    <h2 class="text-xl font-semibold mt-4 mb-2">Baneos Permanentes</h2>
-    <div class="overflow-x-auto mb-6">
-      <table class="min-w-full border border-gray-700">
-        <thead class="bg-gray-800">
-          <tr>
+    <!-- Tabla de Baneos Permanentes -->
+    <div>
+      <h2 class="text-lg font-bold mb-2 text-center">Baneos Permanentes</h2>
+      <table class="w-full border-collapse bg-gray-800 rounded">
+        <thead>
+          <tr class="bg-gray-700">
+            <th class="px-3 py-2 text-left">ID</th>
             <th class="px-3 py-2 text-left">Sanción</th>
             <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-right">Durabilidad</th>
-            <th class="px-3 py-2 text-right">Acciones</th>
+            <th class="px-3 py-2 text-left">Durabilidad</th>
+            <th class="px-3 py-2 text-left">Acciones</th>
           </tr>
         </thead>
-        <tbody id="tbodyPerm" class="divide-y divide-gray-700"></tbody>
+        <tbody id="tbodyBanPerm"></tbody>
       </table>
-      <div id="emptyPerm" class="text-center text-gray-400 py-4">No hay registros</div>
     </div>
   </div>
 
-  <!-- Modal centrado -->
-  <div id="drawer" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-gray-800 p-4 rounded-lg max-w-md w-full">
-      <h2 class="text-xl mb-2" id="modalTitulo">Añadir sanción</h2>
-      <form id="form" class="space-y-2">
+  <!-- Modal -->
+  <div id="drawer" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md">
+      <h3 id="modalTitulo" class="text-lg font-bold mb-4">Añadir sanción</h3>
+      <form id="form" class="space-y-4">
         <input type="hidden" id="registroId" />
-        <input id="sancion" placeholder="Nombre de la sanción" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="sancion" type="text" placeholder="Nombre de la sanción" class="w-full p-2 rounded bg-gray-700" required />
 
+        <!-- Selector principal -->
         <select id="tipo" class="w-full p-2 rounded bg-gray-700" onchange="mostrarSubtipo()">
           <option value="Muteo/Advertencia">Muteo o Advertencia</option>
           <option value="Ban Temporal">Ban Temporal</option>
           <option value="Ban Permanente">Ban Permanente</option>
         </select>
 
-        <select id="subtipo" class="w-full p-2 rounded bg-gray-700 hidden">
+        <!-- Selector adicional -->
+        <select id="subtipo" class="w-full p-2 rounded bg-gray-700">
           <option value="Muteo">Muteo</option>
           <option value="Advertencia">Advertencia</option>
           <option value="Kick">Kick</option>
         </select>
 
-        <input id="durabilidad" type="text" placeholder="Durabilidad" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="durabilidad" type="text" placeholder="Durabilidad (ej: 3 días, Permanente)" class="w-full p-2 rounded bg-gray-700" required />
 
-        <div class="flex justify-between">
+        <div class="flex justify-end space-x-2">
           <button type="button" id="btnCerrar" class="px-4 py-2 bg-gray-600 rounded">Cancelar</button>
-          <button type="submit" class="px-4 py-2 bg-green-500 rounded">Guardar</button>
+          <button type="submit" class="px-4 py-2 bg-green-600 rounded">Guardar</button>
         </div>
       </form>
     </div>
@@ -116,16 +120,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const sancionesRef = ref(db, "sanciones");
-    const estadoRef = ref(db, ".info/connected");
 
-    const estadoConexion = document.getElementById('estadoConexion');
-    const tbodyMuteos = document.getElementById('tbodyMuteos');
-    const tbodyTemp = document.getElementById('tbodyTemp');
-    const tbodyPerm = document.getElementById('tbodyPerm');
-    const emptyMuteos = document.getElementById('emptyMuteos');
-    const emptyTemp = document.getElementById('emptyTemp');
-    const emptyPerm = document.getElementById('emptyPerm');
-
+    const status = document.getElementById('status');
     const drawer = document.getElementById('drawer');
     const form = document.getElementById('form');
     const registroId = document.getElementById('registroId');
@@ -133,39 +129,39 @@
     const tipo = document.getElementById('tipo');
     const subtipo = document.getElementById('subtipo');
     const durabilidad = document.getElementById('durabilidad');
-    const modalTitulo = document.getElementById('modalTitulo');
 
-    // Estado conexión
-    onValue(estadoRef, (snapshot) => {
-      if (snapshot.val()) {
-        estadoConexion.textContent = "Conectado a la base de datos";
-        estadoConexion.className = "mb-4 text-sm px-3 py-1 rounded bg-green-600";
+    const tbodyMuteo = document.getElementById('tbodyMuteo');
+    const tbodyBanTemp = document.getElementById('tbodyBanTemp');
+    const tbodyBanPerm = document.getElementById('tbodyBanPerm');
+
+    // Mostrar subtipo
+    window.mostrarSubtipo = () => {
+      if (tipo.value === "Muteo/Advertencia") {
+        subtipo.classList.remove('hidden');
       } else {
-        estadoConexion.textContent = "Desconectado de la base de datos";
-        estadoConexion.className = "mb-4 text-sm px-3 py-1 rounded bg-red-600";
+        subtipo.classList.add('hidden');
       }
-    });
+    };
 
+    // Abrir modal para añadir sanción
     document.getElementById('btnAbrir').onclick = () => {
-      modalTitulo.textContent = "Añadir sanción";
+      document.getElementById('modalTitulo').textContent = "Añadir sanción";
       drawer.classList.remove('hidden');
       form.reset();
       registroId.value = '';
-      subtipo.classList.add('hidden');
+      tipo.value = "Muteo/Advertencia";
+      subtipo.classList.remove('hidden');
+      subtipo.value = "Muteo";
     };
 
+    // Cerrar modal
     document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
 
-    window.mostrarSubtipo = () => {
-      if(tipo.value === "Muteo/Advertencia") subtipo.classList.remove('hidden');
-      else subtipo.classList.add('hidden');
-    };
-
+    // Guardar sanción
     form.onsubmit = async (e) => {
       e.preventDefault();
       const id = registroId.value || Date.now().toString();
-      let tipoFinal = tipo.value;
-      if(tipo.value === "Muteo/Advertencia") tipoFinal = subtipo.value;
+      const tipoFinal = tipo.value === "Muteo/Advertencia" ? subtipo.value : tipo.value;
       const item = {
         id,
         sancion: sancion.value.trim(),
@@ -176,65 +172,59 @@
       drawer.classList.add('hidden');
     };
 
+    // Escuchar cambios en tiempo real
     onValue(sancionesRef, (snapshot) => {
-      const datos = snapshot.val() || {};
-      const lista = Object.values(datos);
-
-      tbodyMuteos.innerHTML = '';
-      tbodyTemp.innerHTML = '';
-      tbodyPerm.innerHTML = '';
-
-      let muteos = 0, temp = 0, perm = 0;
-
-      lista.forEach((r) => {
+      tbodyMuteo.innerHTML = '';
+      tbodyBanTemp.innerHTML = '';
+      tbodyBanPerm.innerHTML = '';
+      const data = snapshot.val() || {};
+      Object.values(data).forEach((r) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
+          <td class="px-3 py-2">${r.id}</td>
           <td class="px-3 py-2">${r.sancion}</td>
           <td class="px-3 py-2">${r.tipo}</td>
-          <td class="px-3 py-2 text-right">${r.durabilidad}</td>
-          <td class="px-3 py-2 text-right space-x-2">
-            <button class="bg-blue-500 px-2 py-1 rounded" onclick="editar('${r.id}')">Editar</button>
-            <button class="bg-red-500 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
-          </td>`;
-
-        if(r.tipo === "Muteo" || r.tipo === "Advertencia" || r.tipo === "Kick") {
-          tbodyMuteos.appendChild(tr);
-          muteos++;
-        } else if(r.tipo === "Ban Temporal") {
-          tbodyTemp.appendChild(tr);
-          temp++;
-        } else if(r.tipo === "Ban Permanente") {
-          tbodyPerm.appendChild(tr);
-          perm++;
+          <td class="px-3 py-2">${r.durabilidad}</td>
+          <td class="px-3 py-2 space-x-2">
+            <button class="bg-yellow-500 px-2 py-1 rounded" onclick="editar('${r.id}')">Editar</button>
+            <button class="bg-red-600 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
+          </td>
+        `;
+        if (["Muteo", "Advertencia", "Kick"].includes(r.tipo)) {
+          tbodyMuteo.appendChild(tr);
+        } else if (r.tipo === "Ban Temporal") {
+          tbodyBanTemp.appendChild(tr);
+        } else if (r.tipo === "Ban Permanente") {
+          tbodyBanPerm.appendChild(tr);
         }
       });
-
-      emptyMuteos.classList.toggle('hidden', muteos > 0);
-      emptyTemp.classList.toggle('hidden', temp > 0);
-      emptyPerm.classList.toggle('hidden', perm > 0);
+      status.textContent = "Conectado a Realtime Database";
+      status.classList.remove("text-yellow-400");
+      status.classList.add("text-green-400");
     });
 
+    // Editar sanción
     window.editar = async (id) => {
-      const snap = await get(ref(db, `sanciones/${id}`));
-      const data = snap.val();
-      if(!data) return;
-      modalTitulo.textContent = "Editar sanción";
-      registroId.value = data.id;
-      sancion.value = data.sancion;
-      durabilidad.value = data.durabilidad;
+      const snapshot = await get(ref(db, `sanciones/${id}`));
+      const r = snapshot.val();
+      if (!r) return;
+      document.getElementById('modalTitulo').textContent = "Editar sanción";
+      registroId.value = r.id;
+      sancion.value = r.sancion;
+      durabilidad.value = r.durabilidad;
+      drawer.classList.remove('hidden');
 
-      if(data.tipo === "Muteo" || data.tipo === "Advertencia" || data.tipo === "Kick") {
+      if (["Muteo", "Advertencia", "Kick"].includes(r.tipo)) {
         tipo.value = "Muteo/Advertencia";
         subtipo.classList.remove('hidden');
-        subtipo.value = data.tipo;
+        subtipo.value = r.tipo;
       } else {
-        tipo.value = data.tipo;
+        tipo.value = r.tipo;
         subtipo.classList.add('hidden');
       }
-
-      drawer.classList.remove('hidden');
     };
 
+    // Eliminar sanción
     window.eliminar = async (id) => {
       await remove(ref(db, `sanciones/${id}`));
     };
