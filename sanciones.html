@@ -25,7 +25,7 @@
           <tr>
             <th class="px-3 py-2 text-left">Sanción</th>
             <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-right">Durabilidad (días)</th>
+            <th class="px-3 py-2 text-right">Durabilidad</th>
             <th class="px-3 py-2 text-right">Acciones</th>
           </tr>
         </thead>
@@ -42,7 +42,7 @@
           <tr>
             <th class="px-3 py-2 text-left">Sanción</th>
             <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-right">Durabilidad (días)</th>
+            <th class="px-3 py-2 text-right">Durabilidad</th>
             <th class="px-3 py-2 text-right">Acciones</th>
           </tr>
         </thead>
@@ -59,7 +59,7 @@
           <tr>
             <th class="px-3 py-2 text-left">Sanción</th>
             <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-right">Durabilidad (días)</th>
+            <th class="px-3 py-2 text-right">Durabilidad</th>
             <th class="px-3 py-2 text-right">Acciones</th>
           </tr>
         </thead>
@@ -83,7 +83,7 @@
           <option value="Ban Permanente">Ban Permanente</option>
         </select>
 
-        <input id="durabilidad" type="number" placeholder="Durabilidad (días)" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="durabilidad" type="text" placeholder="Durabilidad" class="w-full p-2 rounded bg-gray-700" required />
 
         <div class="flex justify-between">
           <button type="button" id="btnCerrar" class="px-4 py-2 bg-gray-600 rounded">Cancelar</button>
@@ -97,7 +97,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
       authDomain: "et-accounts.firebaseapp.com",
@@ -113,7 +112,6 @@
     const sancionesRef = ref(db, "sanciones");
     const estadoRef = ref(db, ".info/connected");
 
-    // Elementos UI
     const estadoConexion = document.getElementById('estadoConexion');
     const tbodyMuteos = document.getElementById('tbodyMuteos');
     const tbodyTemp = document.getElementById('tbodyTemp');
@@ -141,7 +139,6 @@
       }
     });
 
-    // Abrir modal
     document.getElementById('btnAbrir').onclick = () => {
       modalTitulo.textContent = "Añadir sanción";
       drawer.classList.remove('hidden');
@@ -149,10 +146,8 @@
       registroId.value = '';
     };
 
-    // Cerrar modal
     document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
 
-    // Guardar/editar sanción
     form.onsubmit = async (e) => {
       e.preventDefault();
       const id = registroId.value || Date.now().toString();
@@ -160,18 +155,16 @@
         id,
         sancion: sancion.value.trim(),
         tipo: tipo.value,
-        durabilidad: Number(durabilidad.value || 0)
+        durabilidad: durabilidad.value.trim()
       };
       await set(ref(db, `sanciones/${id}`), item);
       drawer.classList.add('hidden');
     };
 
-    // Escuchar cambios
     onValue(sancionesRef, (snapshot) => {
       const datos = snapshot.val() || {};
       const lista = Object.values(datos);
 
-      // Limpieza
       tbodyMuteos.innerHTML = '';
       tbodyTemp.innerHTML = '';
       tbodyPerm.innerHTML = '';
@@ -206,7 +199,6 @@
       emptyPerm.classList.toggle('hidden', perm > 0);
     });
 
-    // Editar sanción
     window.editar = async (id) => {
       const snap = await get(ref(db, `sanciones/${id}`));
       const data = snap.val();
@@ -219,7 +211,6 @@
       drawer.classList.remove('hidden');
     };
 
-    // Eliminar sanción
     window.eliminar = async (id) => {
       await remove(ref(db, `sanciones/${id}`));
     };
