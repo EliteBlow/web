@@ -100,6 +100,43 @@
     #buscar-nick {
       padding:8px; width:300px; font-size:14px; border:1px solid #ccc; border-radius:5px; margin:0 auto 15px; display:block;
     }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+    }
+    .modal-content input[type=text] {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .modal-content .condiciones label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -111,7 +148,7 @@
     <span id="estado-texto">Conectando...</span>
   </p>
 
-  <!-- Formulario -->
+  <!-- Formulario de agregar -->
   <form id="registro-form">
     <input type="text" id="nick1" placeholder="Nick 1" required />
     <input type="text" id="nick2" placeholder="Nick 2" />
@@ -150,6 +187,26 @@
     <tbody></tbody>
   </table>
 
+  <!-- Modal de edición -->
+  <div id="modal-editar" class="modal">
+    <div class="modal-content">
+      <h2>Editar Registro</h2>
+      <input type="text" id="edit-nick1" placeholder="Nick 1" required />
+      <input type="text" id="edit-nick2" placeholder="Nick 2" />
+      <input type="text" id="edit-nick3" placeholder="Nick 3" />
+      <div class="condiciones">
+        <label><input type="radio" name="edit-condicion" value="Amigos"> Amigos</label>
+        <label><input type="radio" name="edit-condicion" value="Familiares"> Familiares</label>
+        <label><input type="radio" name="edit-condicion" value="Novios"> Novios</label>
+        <label><input type="radio" name="edit-condicion" value="Multicuenta"> Multicuenta</label>
+      </div>
+      <div class="modal-footer">
+        <button id="cerrar-modal" type="button" style="background:#ccc;color:#000;">Cancelar</button>
+        <button id="guardar-modal" type="button">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase y librerías -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -174,7 +231,17 @@
     const pillDot = document.querySelector('.pill-dot');
     const inputBuscar = document.getElementById('buscar-nick');
 
-    // Estado de conexión
+    // Modal elementos
+    const modal = document.getElementById('modal-editar');
+    const editNick1 = document.getElementById('edit-nick1');
+    const editNick2 = document.getElementById('edit-nick2');
+    const editNick3 = document.getElementById('edit-nick3');
+    const guardarModalBtn = document.getElementById('guardar-modal');
+    const cerrarModalBtn = document.getElementById('cerrar-modal');
+
+    let editKey = null;
+
+    // Estado conexión
     db.ref(".info/connected").on("value", snap => {
       if (snap.val() === true) {
         estadoTexto.textContent = "Firebase Realtime (conectado)";
@@ -187,7 +254,6 @@
       }
     });
 
-    // Mostrar registros filtrando
     function mostrarRegistros(snapshot, filtro='') {
       tablaBody.innerHTML = "";
       snapshot.forEach(child => {
@@ -205,7 +271,7 @@
             <td>${data.nick3}</td>
             <td>${data.condicion}</td>
             <td class="actions">
-              <button onclick="editarRegistro('${key}')">Editar</button>
+              <button onclick="abrirModal('${key}')">Editar</button>
               <button class="delete" onclick="borrarRegistro('${key}')">Eliminar</button>
             </td>
           `;
@@ -214,15 +280,12 @@
       });
     }
 
-    // Suscripción en tiempo real
     registrosRef.on('value', snapshot => mostrarRegistros(snapshot, inputBuscar.value.toLowerCase()));
-
-    // Buscar en tiempo real
     inputBuscar.addEventListener('input', () => {
       registrosRef.once('value', snapshot => mostrarRegistros(snapshot, inputBuscar.value.toLowerCase()));
     });
 
-    // Agregar registro
+    // Agregar
     document.getElementById('registro-form').addEventListener('submit', e => {
       e.preventDefault();
       const nick1 = document.getElementById('nick1').value.trim();
@@ -234,24 +297,35 @@
       e.target.reset();
     });
 
-    // Editar registro
-    window.editarRegistro = function (key) {
-      const nuevoNick1 = prompt('Nuevo Nick 1:');
-      const nuevoNick2 = prompt('Nuevo Nick 2 (opcional):');
-      const nuevoNick3 = prompt('Nuevo Nick 3 (opcional):');
-      const nuevaCondicion = prompt('Nueva condición (Amigos, Familiares, Novios, Multicuenta):');
-      if (nuevoNick1 && nuevaCondicion) {
-        registrosRef.child(key).update({
-          nick1: nuevoNick1,
-          nick2: nuevoNick2 || '',
-          nick3: nuevoNick3 || '',
-          condicion: nuevaCondicion
-        });
-      }
+    // Abrir modal
+    window.abrirModal = function(key) {
+      editKey = key;
+      registrosRef.child(key).once('value', snap => {
+        const data = snap.val();
+        editNick1.value = data.nick1 || '';
+        editNick2.value = data.nick2 || '';
+        editNick3.value = data.nick3 || '';
+        document.querySelectorAll('input[name="edit-condicion"]').forEach(r => r.checked = r.value===data.condicion);
+        modal.style.display = "block";
+      });
     };
 
+    // Guardar cambios
+    guardarModalBtn.addEventListener('click', () => {
+      const nick1 = editNick1.value.trim();
+      const nick2 = editNick2.value.trim();
+      const nick3 = editNick3.value.trim();
+      const condicion = document.querySelector('input[name="edit-condicion"]:checked')?.value;
+      if (!nick1 || !condicion) return alert("Nick 1 y condición son obligatorios");
+      registrosRef.child(editKey).update({ nick1, nick2, nick3, condicion });
+      modal.style.display = "none";
+    });
+
+    cerrarModalBtn.addEventListener('click', () => modal.style.display = "none");
+    window.onclick = e => { if(e.target===modal) modal.style.display="none"; }
+
     // Borrar registro
-    window.borrarRegistro = function (key) {
+    window.borrarRegistro = function(key) {
       if (confirm('¿Seguro que deseas borrar este registro?')) {
         registrosRef.child(key).remove();
       }
