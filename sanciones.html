@@ -6,13 +6,19 @@
   <title>Gestor de Sanciones</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
-<body class="bg-gray-900 text-white">
-  <div class="max-w-5xl mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">Gestor de Sanciones</h1>
-    <button id="btnAbrir" class="bg-green-500 px-4 py-2 rounded">Añadir sanción</button>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-start min-h-screen p-4">
+
+  <!-- Indicador de conexión -->
+  <div id="estadoConexion" class="mb-4 text-sm px-3 py-1 rounded bg-gray-700">Conectando a la base de datos...</div>
+
+  <div class="bg-gray-800 rounded-lg shadow-lg w-full max-w-5xl p-6">
+    <h1 class="text-2xl font-bold mb-4 text-center">Gestor de Sanciones</h1>
+    <div class="flex justify-center mb-4">
+      <button id="btnAbrir" class="bg-green-500 px-4 py-2 rounded">Añadir sanción</button>
+    </div>
 
     <!-- Tabla de registros -->
-    <div class="overflow-x-auto mt-4">
+    <div class="overflow-x-auto">
       <table class="min-w-full border border-gray-700">
         <thead class="bg-gray-800">
           <tr>
@@ -32,7 +38,7 @@
   <!-- Modal -->
   <div id="drawer" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
     <div class="bg-gray-800 p-4 rounded-lg max-w-md w-full">
-      <h2 class="text-xl mb-2">Añadir sanción</h2>
+      <h2 class="text-xl mb-2" id="modalTitulo">Añadir sanción</h2>
       <form id="form" class="space-y-2">
         <input type="hidden" id="registroId" />
         <input id="sancion" placeholder="Nombre de la sanción" class="w-full p-2 rounded bg-gray-700" required />
@@ -57,7 +63,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     // Configuración Firebase
     const firebaseConfig = {
@@ -73,6 +79,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const sancionesRef = ref(db, "sanciones");
+    const estadoRef = ref(db, ".info/connected");
 
     // Referencias UI
     const tbody = document.getElementById('tbody');
@@ -84,9 +91,23 @@
     const tipo = document.getElementById('tipo');
     const descripcion = document.getElementById('descripcion');
     const durabilidad = document.getElementById('durabilidad');
+    const estadoConexion = document.getElementById('estadoConexion');
+    const modalTitulo = document.getElementById('modalTitulo');
+
+    // Estado de conexión
+    onValue(estadoRef, (snapshot) => {
+      if (snapshot.val()) {
+        estadoConexion.textContent = "Conectado a la base de datos";
+        estadoConexion.className = "mb-4 text-sm px-3 py-1 rounded bg-green-600";
+      } else {
+        estadoConexion.textContent = "Desconectado de la base de datos";
+        estadoConexion.className = "mb-4 text-sm px-3 py-1 rounded bg-red-600";
+      }
+    });
 
     // Abrir modal
     document.getElementById('btnAbrir').onclick = () => {
+      modalTitulo.textContent = "Añadir sanción";
       drawer.classList.remove('hidden');
       form.reset();
       registroId.value = '';
@@ -95,7 +116,7 @@
     // Cerrar modal
     document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
 
-    // Guardar sanción
+    // Guardar/editar sanción
     form.onsubmit = async (e) => {
       e.preventDefault();
       const id = registroId.value || Date.now().toString();
@@ -127,12 +148,28 @@
           <td class="px-3 py-2">${r.tipo}</td>
           <td class="px-3 py-2">${r.descripcion}</td>
           <td class="px-3 py-2 text-right">${r.durabilidad}</td>
-          <td class="px-3 py-2 text-right">
+          <td class="px-3 py-2 text-right space-x-2">
+            <button class="bg-blue-500 px-2 py-1 rounded" onclick="editar('${r.id}')">Editar</button>
             <button class="bg-red-500 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
           </td>`;
         tbody.appendChild(tr);
       });
     });
+
+    // Editar sanción
+    window.editar = async (id) => {
+      const snapshot = (await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js")).get(ref(db, `sanciones/${id}`));
+      const snap = await snapshot;
+      const data = snap.val();
+      if (!data) return;
+      modalTitulo.textContent = "Editar sanción";
+      registroId.value = data.id;
+      sancion.value = data.sancion;
+      tipo.value = data.tipo;
+      descripcion.value = data.descripcion;
+      durabilidad.value = data.durabilidad;
+      drawer.classList.remove('hidden');
+    };
 
     // Eliminar sanción
     window.eliminar = async (id) => {
