@@ -8,8 +8,13 @@
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center p-6">
 
-  <!-- Título principal -->
-  <h1 class="text-2xl font-bold mb-4 text-center">Gestor de Sanciones</h1>
+  <!-- Barra superior con botón Volver -->
+  <div class="w-full max-w-6xl flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold text-center flex-1">Gestor de Sanciones</h1>
+    <button onclick="window.location.href='index.html'" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded shadow">
+      Volver
+    </button>
+  </div>
 
   <!-- Estado de conexión -->
   <div id="status" class="mb-4 text-sm text-yellow-400">Conectando a Realtime Database...</div>
@@ -134,7 +139,7 @@
     const tbodyBanTemp = document.getElementById('tbodyBanTemp');
     const tbodyBanPerm = document.getElementById('tbodyBanPerm');
 
-    // Mostrar subtipo
+    // Mostrar subtipo según selección
     window.mostrarSubtipo = () => {
       if (tipo.value === "Muteo/Advertencia") {
         subtipo.classList.remove('hidden');
