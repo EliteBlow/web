@@ -313,7 +313,11 @@
 
       if (currentNickKey) {
         const newNoteRef = database.ref(`nicks/${currentNickKey}/notes`).push();
-        newNoteRef.set({ text: noteText, color: color });
+        newNoteRef.set({ 
+          text: noteText, 
+          color: color, 
+          user: modalNickName.textContent.replace("Notas de ", "")
+        });
         newNoteInput.value = '';
         colorCheckboxes.forEach(chk => chk.checked = false);
       }
@@ -328,8 +332,8 @@
         const noteData = notesObj[noteKey];
         const li = document.createElement('li');
 
-        // Texto de la nota
-        li.textContent = noteData.text;
+        // Mostrar usuario entre paréntesis a la izquierda
+        li.textContent = `(${noteData.user}) ${noteData.text}`;
         li.style.color = noteData.color || 'white';
 
         const deleteBtn = document.createElement('button');
