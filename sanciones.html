@@ -3,26 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestor de Sanciones con Firebase</title>
+  <title>Gestor de Sanciones</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
 <body class="bg-gray-900 text-white">
-  <div class="max-w-6xl mx-auto p-4">
+  <div class="max-w-5xl mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Gestor de Sanciones</h1>
     <button id="btnAbrir" class="bg-green-500 px-4 py-2 rounded">Añadir sanción</button>
 
+    <!-- Tabla de registros -->
     <div class="overflow-x-auto mt-4">
       <table class="min-w-full border border-gray-700">
         <thead class="bg-gray-800">
           <tr>
-            <th class="px-3 py-2 text-left">ID</th>
-            <th class="px-3 py-2 text-left">Nombre</th>
+            <th class="px-3 py-2 text-left">Sanción</th>
             <th class="px-3 py-2 text-left">Tipo</th>
-            <th class="px-3 py-2 text-right">Durabilidad</th>
-            <th class="px-3 py-2 text-left">Inicio</th>
-            <th class="px-3 py-2 text-left">Fin</th>
-            <th class="px-3 py-2 text-left">Estado</th>
-            <th class="px-3 py-2 text-left">Observaciones</th>
+            <th class="px-3 py-2 text-left">Descripción</th>
+            <th class="px-3 py-2 text-right">Durabilidad (días)</th>
             <th class="px-3 py-2 text-right">Acciones</th>
           </tr>
         </thead>
@@ -32,22 +29,24 @@
     </div>
   </div>
 
-  <!-- Modal para añadir/editar -->
+  <!-- Modal -->
   <div id="drawer" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
     <div class="bg-gray-800 p-4 rounded-lg max-w-md w-full">
-      <h2 id="drawerTitle" class="text-xl mb-2">Añadir sanción</h2>
+      <h2 class="text-xl mb-2">Añadir sanción</h2>
       <form id="form" class="space-y-2">
         <input type="hidden" id="registroId" />
-        <input id="nombre" placeholder="Nombre" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="sancion" placeholder="Nombre de la sanción" class="w-full p-2 rounded bg-gray-700" required />
+        
+        <!-- Selector de tipo -->
         <select id="tipo" class="w-full p-2 rounded bg-gray-700">
-          <option>Leve</option>
-          <option>Grave</option>
-          <option>Muy grave</option>
+          <option value="Leve">Leve</option>
+          <option value="Grave">Grave</option>
+          <option value="Muy grave">Muy grave</option>
         </select>
+
+        <textarea id="descripcion" placeholder="Descripción" class="w-full p-2 rounded bg-gray-700"></textarea>
         <input id="durabilidad" type="number" placeholder="Durabilidad (días)" class="w-full p-2 rounded bg-gray-700" required />
-        <input id="inicio" type="date" class="w-full p-2 rounded bg-gray-700" required />
-        <input id="fin" type="date" class="w-full p-2 rounded bg-gray-700" disabled />
-        <textarea id="obs" placeholder="Observaciones" class="w-full p-2 rounded bg-gray-700"></textarea>
+
         <div class="flex justify-between">
           <button type="button" id="btnCerrar" class="px-4 py-2 bg-gray-600 rounded">Cancelar</button>
           <button type="submit" class="px-4 py-2 bg-green-500 rounded">Guardar</button>
@@ -60,7 +59,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    // Configuración de tu proyecto Firebase
+    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
       authDomain: "et-accounts.firebaseapp.com",
@@ -75,17 +74,16 @@
     const db = getDatabase(app);
     const sancionesRef = ref(db, "sanciones");
 
+    // Referencias UI
     const tbody = document.getElementById('tbody');
     const empty = document.getElementById('empty');
     const drawer = document.getElementById('drawer');
     const form = document.getElementById('form');
     const registroId = document.getElementById('registroId');
-    const nombre = document.getElementById('nombre');
+    const sancion = document.getElementById('sancion');
     const tipo = document.getElementById('tipo');
+    const descripcion = document.getElementById('descripcion');
     const durabilidad = document.getElementById('durabilidad');
-    const inicio = document.getElementById('inicio');
-    const fin = document.getElementById('fin');
-    const obs = document.getElementById('obs');
 
     // Abrir modal
     document.getElementById('btnAbrir').onclick = () => {
@@ -93,32 +91,9 @@
       form.reset();
       registroId.value = '';
     };
+
+    // Cerrar modal
     document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
-
-    // Funciones auxiliares
-    function addDays(date, days) {
-      const d = new Date(date);
-      d.setDate(d.getDate() + Number(days || 0));
-      return d;
-    }
-    function toDateInputValue(d) {
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    }
-    function estadoDe(inicio, fin) {
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const f = new Date(fin);
-      f.setHours(0, 0, 0, 0);
-      return f >= hoy ? 'vigente' : 'expirada';
-    }
-
-    // Calcular fin automáticamente
-    durabilidad.oninput = () => {
-      if (inicio.value) fin.value = toDateInputValue(addDays(inicio.value, durabilidad.value));
-    };
-    inicio.onchange = () => {
-      if (inicio.value) fin.value = toDateInputValue(addDays(inicio.value, durabilidad.value));
-    };
 
     // Guardar sanción
     form.onsubmit = async (e) => {
@@ -126,19 +101,16 @@
       const id = registroId.value || Date.now().toString();
       const item = {
         id,
-        nombre: nombre.value.trim(),
+        sancion: sancion.value.trim(),
         tipo: tipo.value,
+        descripcion: descripcion.value.trim(),
         durabilidad: Number(durabilidad.value || 0),
-        inicio: inicio.value,
-        fin: fin.value,
-        estado: estadoDe(inicio.value, fin.value),
-        obs: obs.value.trim()
       };
       await set(ref(db, `sanciones/${id}`), item);
       drawer.classList.add('hidden');
     };
 
-    // Escuchar cambios en tiempo real
+    // Escuchar datos en tiempo real
     onValue(sancionesRef, (snapshot) => {
       const datos = snapshot.val() || {};
       const lista = Object.values(datos);
@@ -151,14 +123,10 @@
       lista.forEach((r) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="px-3 py-2">${r.id}</td>
-          <td class="px-3 py-2">${r.nombre}</td>
+          <td class="px-3 py-2">${r.sancion}</td>
           <td class="px-3 py-2">${r.tipo}</td>
+          <td class="px-3 py-2">${r.descripcion}</td>
           <td class="px-3 py-2 text-right">${r.durabilidad}</td>
-          <td class="px-3 py-2">${r.inicio}</td>
-          <td class="px-3 py-2">${r.fin}</td>
-          <td class="px-3 py-2">${r.estado}</td>
-          <td class="px-3 py-2">${r.obs}</td>
           <td class="px-3 py-2 text-right">
             <button class="bg-red-500 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
           </td>`;
