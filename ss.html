@@ -40,6 +40,7 @@
     .footer { max-width: 980px; margin: 12px auto 40px; padding: 0 16px; color: var(--muted); font-size: 12px; text-align: center; }
     input[type="checkbox"] { width: 18px; height: 18px; accent-color: #22d3ee; }
     code { background: rgba(2,6,23,.45); padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(148,163,184,.18); }
+    textarea { font-family: system-ui; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -125,6 +126,12 @@
           <li class="item"><input type="checkbox" data-i><label>Tomar screenshots (SS) y guardar evidencias.</label></li>
         </ul>
       </section>
+
+      <!-- NUEVO: Informe adicional -->
+      <section class="group">
+        <h2>9) Informe adicional</h2>
+        <textarea id="report" placeholder="Escribe aquí tu informe..." rows="6" style="width:100%; padding:10px; border-radius:12px; border:1px solid rgba(148,163,184,.25); background: rgba(15,23,42,.6); color: var(--text); resize: vertical;"></textarea>
+      </section>
     </div>
   </main>
 
@@ -138,6 +145,7 @@
     const progressBar = document.getElementById('bar');
     const jugadorInput = document.getElementById('jugador');
     const staffInput = document.getElementById('staff');
+    const reportInput = document.getElementById('report');
 
     function updateProgress() {
       const total = checkboxes.length;
@@ -160,6 +168,7 @@
     document.getElementById('btn-save').addEventListener('click', () => {
       const jugador = jugadorInput.value.trim();
       const staff = staffInput.value.trim();
+      const report = reportInput.value.trim();
 
       if (!jugador || !staff) {
         alert("Por favor, completa los campos de Jugador y Staff antes de guardar.");
@@ -176,6 +185,10 @@
         contenido += `${estado} ${label}\n`;
       });
 
+      if(report) {
+        contenido += `\nInforme adicional:\n${report}\n`;
+      }
+
       const blob = new Blob([contenido], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -183,6 +196,8 @@
       a.download = `checklist_eternal_${Date.now()}.txt`;
       a.click();
       URL.revokeObjectURL(url);
+
+      reportInput.value = ''; // limpiar textarea después de guardar
     });
 
     checkboxes.forEach(c => c.addEventListener('change', updateProgress));
@@ -197,4 +212,3 @@
   </script>
 </body>
 </html>
-
