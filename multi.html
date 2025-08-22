@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Formulario con persistencia local y Firebase en tiempo real</title>
+<title>Formulario con Realtime Database</title>
 <style>
   :root { --bg:#fff; --muted:#f5f5f5; --border:#dcdcdc; --text:#222; --ok:#4caf50; --info:#2196f3; --danger:#f44336; }
   * { box-sizing: border-box; }
@@ -36,7 +36,10 @@
 <body>
 
 <h1>Añadir información</h1>
-<div id="estado" aria-live="polite">Conexión: <span class="pill"><span class="pill-dot warn"></span><span id="estado-texto">Local (sin Firebase)</span></span></div>
+<div id="estado" aria-live="polite">Conexión: 
+  <span class="pill"><span class="pill-dot warn"></span>
+  <span id="estado-texto">Local (sin Firebase)</span></span>
+</div>
 
 <form id="form-add" novalidate>
   <div class="row">
@@ -95,16 +98,16 @@
   <button type="button" id="clear-all" class="btn-secondary">Borrar todo</button>
   <input type="file" id="file-input" accept=".xlsx" style="display:none">
 </div>
-  
-<!-- XLSX para exportar/importar -->
+
+<!-- Librerías -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase (compat para API namespaced) → Pega tu config y quedará en tiempo real -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-/*********************\n * 1) CONFIG FIREBASE\n *********************/
-// ⚠️ Sustituye estos valores por los tuyos desde la consola de Firebase → Configuración del proyecto → Tu app web
+/***********************
+ * 1) CONFIG FIREBASE
+ ***********************/
 const firebaseConfig = {
   apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
   authDomain: "et-accounts.firebaseapp.com",
@@ -114,20 +117,20 @@ const firebaseConfig = {
   messagingSenderId: "1006439185867",
   appId: "1:1006439185867:web:ee9221150be923340e4a4e"
 };
-const USE_FIREBASE = Boolean(firebaseConfig.apiKey && !String(firebaseConfig.apiKey).includes('TU_API_KEY'));
+
 let db = null;
 try {
-  if (USE_FIREBASE && window.firebase) {
-    const app = firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-    console.log('[Firebase] Inicializado');
-  }
+  const app = firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  console.log('[Firebase] Realtime DB inicializado');
 } catch (err) {
-  console.warn('No se pudo inicializar Firebase. Se usará almacenamiento local.', err);
+  console.warn('No se pudo inicializar Firebase. Usando almacenamiento local.', err);
   db = null;
 }
 
-/*********************************\n * 2) ADAPTADORES DE PERSISTENCIA\n *********************************/
+/***********************
+ * 2) ADAPTADORES
+ ***********************/
 const localAdapter = (() => {
   const KEY = 'registros';
   let subs = [];
@@ -135,7 +138,6 @@ const localAdapter = (() => {
   const write = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
   const emit = () => subs.forEach(fn => fn(read()));
   return {
-    name: 'LocalStorage',
     onSnapshot(cb){ subs.push(cb); cb(read()); },
     async add(data){ const arr = read(); arr.push({ id: genId(), ...data }); write(arr); emit(); },
     async update(id, data){ const arr = read(); const i = arr.findIndex(r=>r.id===id); if(i>-1){ arr[i] = { ...arr[i], ...data }; write(arr); emit(); } },
@@ -146,53 +148,62 @@ const localAdapter = (() => {
 })();
 
 const firebaseAdapter = (() => {
-  const col = () => db.collection('registros');
+  const ref = () => db.ref('registros');
   return {
-    name: 'Firebase',
     onSnapshot(cb){
-      // Escucha en tiempo real
-      return col().orderBy('nick1').onSnapshot(snap => {
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      ref().on('value', snap => {
+        const val = snap.val() || {};
+        const data = Object.entries(val).map(([id, r]) => ({ id, ...r }));
         cb(data);
       });
     },
-    async add(data){ await col().add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); },
-    async update(id, data){ await col().doc(id).update(data); },
-    async remove(id){ await col().doc(id).delete(); },
-    async clear(){
-      const snap = await col().get();
-      const ops = snap.docs.map(d => d.ref.delete());
-      await Promise.all(ops);
+    async add(data){
+      await ref().push({ ...data, createdAt: Date.now() });
     },
-    async getAll(){ const snap = await col().get(); return snap.docs.map(d=>({ id:d.id, ...d.data() })); }
+    async update(id, data){
+      await ref().child(id).update(data);
+    },
+    async remove(id){
+      await ref().child(id).remove();
+    },
+    async clear(){
+      await ref().remove();
+    },
+    async getAll(){
+      const snap = await ref().get();
+      const val = snap.val() || {};
+      return Object.entries(val).map(([id, r]) => ({ id, ...r }));
+    }
   };
 })();
 
 const storage = db ? firebaseAdapter : localAdapter;
 
-/***********************\n * 3) UI Y FUNCIONALIDAD\n ***********************/
+/***********************
+ * 3) UI y lógica
+ ***********************/
 const form = document.getElementById('form-add');
 const tabla = document.querySelector('#tabla-registros tbody');
 const fileInput = document.getElementById('file-input');
-const importBtn = document.getElementById('import-xlsx');
 const searchInput = document.getElementById('search');
 const contador = document.getElementById('contador');
 const estadoTexto = document.getElementById('estado-texto');
 let registros = [];
 let editId = null;
-let sortColumn = null; let sortAsc = true;
+let sortColumn = null;
+let sortAsc = true;
 
-// Estado visual de conexión
-(function setEstado(){
+// Estado de conexión
+(function(){
   const pillDot = document.querySelector('.pill-dot');
-  if (db){ estadoTexto.textContent = 'Firebase (tiempo real)'; pillDot.classList.add('ok'); pillDot.classList.remove('warn'); }
+  if (db){ estadoTexto.textContent = 'Firebase (Realtime DB)'; pillDot.classList.add('ok'); pillDot.classList.remove('warn'); }
   else { estadoTexto.textContent = 'Local (sin Firebase)'; pillDot.classList.add('warn'); pillDot.classList.remove('ok'); }
 })();
 
-// Suscripción en tiempo real
+// Suscripción
 storage.onSnapshot(list => { registros = list; renderTabla(); });
 
-// Render de tabla con filtro y orden
+// Render tabla
 function renderTabla(){
   const filtro = searchInput.value.toLowerCase();
   let datos = registros.filter(r =>
@@ -213,32 +224,30 @@ function renderTabla(){
   tabla.innerHTML = '';
   datos.forEach(r => {
     const fila = document.createElement('tr');
-    const claseCondicion = (r.condicion||'').toLowerCase();
     fila.innerHTML = `
       <td>${escapeHtml(r.nick1)}</td>
       <td>${escapeHtml(r.nick2||'-')}</td>
       <td>${escapeHtml(r.nick3||'-')}</td>
-      <td><span class="condicion ${claseCondicion}">${escapeHtml(r.condicion||'-')}</span></td>
+      <td><span class="condicion ${r.condicion?.toLowerCase()}">${escapeHtml(r.condicion||'-')}</span></td>
       <td>
-        <button type="button" class="btn btn-edit" data-id="${r.id}">Editar</button>
-        <button type="button" class="btn btn-delete" data-id="${r.id}">Eliminar</button>
-      </td>
-    `;
+        <button class="btn btn-edit" data-id="${r.id}">Editar</button>
+        <button class="btn btn-delete" data-id="${r.id}">Eliminar</button>
+      </td>`;
     tabla.appendChild(fila);
   });
   contador.textContent = `Registros: ${datos.length}`;
 }
 
-// Escapar HTML básico
-function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s])); }
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]));
+}
 
-// ID simple para modo local
 function genId(){ return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`; }
 
-// Guardar o actualizar
+// Guardar/actualizar
 form.addEventListener('submit', async e => {
   e.preventDefault();
-  if (!form.checkValidity()) { form.reportValidity(); return; }
+  if (!form.checkValidity()){ form.reportValidity(); return; }
   const nuevo = {
     nick1: form.nick1.value.trim(),
     nick2: form.nick2.value.trim(),
@@ -250,7 +259,7 @@ form.addEventListener('submit', async e => {
   form.reset();
 });
 
-// Editar / Eliminar
+// Editar/eliminar
 tabla.addEventListener('click', async e => {
   const id = e.target.dataset.id;
   if (!id) return;
@@ -268,7 +277,7 @@ tabla.addEventListener('click', async e => {
   }
 });
 
-// Orden por columnas
+// Orden columnas
 Array.from(document.querySelectorAll('#tabla-registros th[data-col]')).forEach(th => {
   th.addEventListener('click', () => {
     const col = th.dataset.col;
@@ -286,10 +295,9 @@ document.getElementById('clear-all').addEventListener('click', async () => {
   if (confirm('¿Seguro que quieres borrar todos los registros?')){ await storage.clear(); }
 });
 
-/***********************\n * 4) EXPORTAR / IMPORTAR\n ***********************/
-// Exportar a Excel (datos actuales en memoria)
+// Exportar a Excel
 document.getElementById('export-excel').addEventListener('click', () => {
-  if (!registros.length) { alert('No hay registros para exportar'); return; }
+  if (!registros.length){ alert('No hay registros para exportar'); return; }
   const data = registros.map(r => ({
     'Nick 1': r.nick1 || '',
     'Nick 2': r.nick2 || '',
@@ -302,8 +310,8 @@ document.getElementById('export-excel').addEventListener('click', () => {
   XLSX.writeFile(wb, 'registros.xlsx');
 });
 
-// Importar Excel (reemplaza lo existente)
-importBtn.addEventListener('click', () => fileInput.click());
+// Importar desde Excel
+document.getElementById('import-xlsx').addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -315,16 +323,8 @@ fileInput.addEventListener('change', async e => {
     const ws = wb.Sheets[wsName];
     const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
-    // Limpiar todo primero
     await storage.clear();
 
-   <div class="actions">
-  <button type="button" id="export-excel">Exportar a Excel</button>
-  <button type="button" id="import-xlsx">Importar desde Excel</button>
-  <input type="file" id="file-input" accept=".xlsx" style="display:none">
-</div>
- 
-    // Insertar fila a fila
     for (const row of json){
       const nick1 = (row['Nick 1'] || '').trim();
       const nick2 = (row['Nick 2'] || '').trim();
