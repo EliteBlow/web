@@ -1,345 +1,189 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Formulario con Realtime Database</title>
-<style>
-  :root { --bg:#fff; --muted:#f5f5f5; --border:#dcdcdc; --text:#222; --ok:#4caf50; --info:#2196f3; --danger:#f44336; }
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; margin: 2rem; display: flex; flex-direction: column; align-items: center; color: var(--text); background: var(--bg); }
-  form { max-width: 520px; width: 100%; display: grid; gap: 1rem; margin-bottom: 1rem; }
-  label { font-weight: 600; }
-  input, select, button { width: 100%; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: .5rem; font: inherit; }
-  .row { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; }
-  .actions { display: flex; gap: .75rem; flex-wrap: wrap; }
-  table { border-collapse: collapse; width: 100%; max-width: 900px; margin-bottom: 1rem; cursor: default; }
-  th, td { border: 1px solid var(--border); padding: .5rem; text-align: left; }
-  th { background: var(--muted); user-select: none; }
-  .btn { padding: .35rem .7rem; border: none; border-radius: .4rem; cursor: pointer; }
-  .btn-delete { background-color: var(--danger); color: white; }
-  .btn-edit { background-color: #4cafef; color: white; }
-  .btn-secondary { background: var(--muted); }
-  .condicion { padding: 2px 6px; border-radius: 4px; color: white; font-weight: 600; display:inline-block; text-align:center; min-width:90px; }
-  .amigos { background-color: var(--ok); }
-  .hermanos { background-color: var(--info); }
-  .multicuenta { background-color: var(--danger); }
-  #search { margin: 0 0 1rem 0; padding: .6rem .75rem; width: 100%; max-width: 900px; border:1px solid var(--border); border-radius:.5rem; }
-  #contador { margin: .4rem 0 1rem; font-weight: 700; }
-  #estado { margin-bottom: 1rem; padding: .5rem .75rem; background: var(--muted); border:1px dashed var(--border); border-radius:.5rem; font-size:.95rem; }
-  .pill { display:inline-flex; align-items:center; gap:.4rem; padding:.2rem .5rem; border-radius:999px; background:#eaeaea; font-weight:600; }
-  .pill-dot { width:.55rem; height:.55rem; border-radius:999px; background:#bbb; }
-  .pill-dot.ok { background: var(--ok); }
-  .pill-dot.warn { background: #ff9800; }
-</style>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="auth.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Registros</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { text-align: center; }
+    form { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    input, select, button { padding: 8px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    .actions button { margin-right: 5px; }
+    .pill-dot {
+      display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px;
+    }
+    .ok { background:green; }
+    .warn { background:red; }
+  </style>
 </head>
 <body>
+  <h1>Gestión de Registros</h1>
 
-<h1>Añadir información</h1>
-<div id="estado" aria-live="polite">Conexión: 
-  <span class="pill"><span class="pill-dot warn"></span>
-  <span id="estado-texto">Local (sin Firebase)</span></span>
-</div>
+  <!-- Estado de conexión -->
+  <p>
+    <span class="pill-dot warn"></span>
+    <span id="estado-texto">Conectando...</span>
+  </p>
 
-<form id="form-add" novalidate>
-  <div class="row">
-    <div>
-      <label for="nick1">Nick 1</label>
-      <input id="nick1" name="nick1" type="text" minlength="2" maxlength="32" required />
-    </div>
-    <div>
-      <label for="nick2">Nick 2</label>
-      <input id="nick2" name="nick2" type="text" minlength="2" maxlength="32" />
-    </div>
-  </div>
+  <!-- Formulario -->
+  <form id="registro-form">
+    <input type="text" id="nick" placeholder="Nick" required />
+    <select id="condicion">
+      <option value="Activo">Activo</option>
+      <option value="Inactivo">Inactivo</option>
+    </select>
+    <button type="submit">Agregar</button>
+  </form>
 
-  <div class="row">
-    <div>
-      <label for="nick3">Nick 3</label>
-      <input id="nick3" name="nick3" type="text" minlength="2" maxlength="32" />
-    </div>
-    <div>
-      <label for="condicion">Condición</label>
-      <select id="condicion" name="condicion" required>
-        <option value="">— Selecciona —</option>
-        <option value="amigos">Amigos</option>
-        <option value="hermanos">Hermanos</option>
-        <option value="multicuenta">Multicuenta</option>
-      </select>
-    </div>
-  </div>
+  <!-- Controles -->
+  <button id="exportar-excel">Exportar a Excel</button>
+  <input type="file" id="importar-excel" accept=".xlsx" style="display:none;" />
+  <button id="boton-importar">Importar desde Excel</button>
+  <button id="borrar-todo">Borrar todo</button>
 
-  <div class="actions">
-    <button type="submit" id="btn-guardar">Guardar</button>
-    <button type="reset">Limpiar</button>
-  </div>
-</form>
+  <!-- Tabla -->
+  <table id="tabla-registros">
+    <thead>
+      <tr>
+        <th>Nick</th>
+        <th>Condición</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<input type="text" id="search" placeholder="Buscar por nick o condición..." aria-label="Buscar">
-<div id="contador">Registros: 0</div>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Librería para Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<h2>Registros guardados</h2>
-<table id="tabla-registros">
-  <thead>
-    <tr>
-      <th data-col="nick1">Nick 1</th>
-      <th data-col="nick2">Nick 2</th>
-      <th data-col="nick3">Nick 3</th>
-      <th data-col="condicion">Condición</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <script>
+    // ---- Configuración Firebase ----
+    const firebaseConfig = {
+      apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
+      authDomain: "et-accounts.firebaseapp.com",
+      databaseURL: "https://et-accounts-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "et-accounts",
+      storageBucket: "et-accounts.appspot.com",
+      messagingSenderId: "1006439185867",
+      appId: "1:1006439185867:web:ee9221150be923340e4a4e"
+    };
 
-<div class="actions">
-  <button type="button" id="export-excel">Exportar a Excel</button>
-  <button type="button" id="import-xlsx">Importar desde Excel</button>
-  <button type="button" id="clear-all" class="btn-secondary">Borrar todo</button>
-  <input type="file" id="file-input" accept=".xlsx" style="display:none">
-</div>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const registrosRef = db.ref('registros');
 
-<!-- Librerías -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    const tablaBody = document.querySelector('#tabla-registros tbody');
+    const estadoTexto = document.getElementById('estado-texto');
+    const pillDot = document.querySelector('.pill-dot');
 
-<script>
-/***********************
- * 1) CONFIG FIREBASE
- ***********************/
-const firebaseConfig = {
-  apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
-  authDomain: "et-accounts.firebaseapp.com",
-  databaseURL: "https://et-accounts-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "et-accounts",
-  storageBucket: "et-accounts.firebasestorage.app",
-  messagingSenderId: "1006439185867",
-  appId: "1:1006439185867:web:ee9221150be923340e4a4e"
-};
-
-let db = null;
-try {
-  const app = firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-  console.log('[Firebase] Realtime DB inicializado');
-} catch (err) {
-  console.warn('No se pudo inicializar Firebase. Usando almacenamiento local.', err);
-  db = null;
-}
-
-/***********************
- * 2) ADAPTADORES
- ***********************/
-const localAdapter = (() => {
-  const KEY = 'registros';
-  let subs = [];
-  const read = () => JSON.parse(localStorage.getItem(KEY) || '[]');
-  const write = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
-  const emit = () => subs.forEach(fn => fn(read()));
-  return {
-    onSnapshot(cb){ subs.push(cb); cb(read()); },
-    async add(data){ const arr = read(); arr.push({ id: genId(), ...data }); write(arr); emit(); },
-    async update(id, data){ const arr = read(); const i = arr.findIndex(r=>r.id===id); if(i>-1){ arr[i] = { ...arr[i], ...data }; write(arr); emit(); } },
-    async remove(id){ const arr = read().filter(r=>r.id!==id); write(arr); emit(); },
-    async clear(){ write([]); emit(); },
-    async getAll(){ return read(); }
-  };
-})();
-
-const firebaseAdapter = (() => {
-  const ref = () => db.ref('registros');
-  return {
-    onSnapshot(cb){
-      ref().on('value', snap => {
-        const val = snap.val() || {};
-        const data = Object.entries(val).map(([id, r]) => ({ id, ...r }));
-        cb(data);
-      });
-    },
-    async add(data){
-      await ref().push({ ...data, createdAt: Date.now() });
-    },
-    async update(id, data){
-      await ref().child(id).update(data);
-    },
-    async remove(id){
-      await ref().child(id).remove();
-    },
-    async clear(){
-      await ref().remove();
-    },
-    async getAll(){
-      const snap = await ref().get();
-      const val = snap.val() || {};
-      return Object.entries(val).map(([id, r]) => ({ id, ...r }));
-    }
-  };
-})();
-
-const storage = db ? firebaseAdapter : localAdapter;
-
-/***********************
- * 3) UI y lógica
- ***********************/
-const form = document.getElementById('form-add');
-const tabla = document.querySelector('#tabla-registros tbody');
-const fileInput = document.getElementById('file-input');
-const searchInput = document.getElementById('search');
-const contador = document.getElementById('contador');
-const estadoTexto = document.getElementById('estado-texto');
-let registros = [];
-let editId = null;
-let sortColumn = null;
-let sortAsc = true;
-
-// Estado de conexión
-(function(){
-  const pillDot = document.querySelector('.pill-dot');
-  if (db){ estadoTexto.textContent = 'Firebase (Realtime DB)'; pillDot.classList.add('ok'); pillDot.classList.remove('warn'); }
-  else { estadoTexto.textContent = 'Local (sin Firebase)'; pillDot.classList.add('warn'); pillDot.classList.remove('ok'); }
-})();
-
-// Suscripción
-storage.onSnapshot(list => { registros = list; renderTabla(); });
-
-// Render tabla
-function renderTabla(){
-  const filtro = searchInput.value.toLowerCase();
-  let datos = registros.filter(r =>
-    (r.nick1||'').toLowerCase().includes(filtro) ||
-    (r.nick2||'').toLowerCase().includes(filtro) ||
-    (r.nick3||'').toLowerCase().includes(filtro) ||
-    (r.condicion||'').toLowerCase().includes(filtro)
-  );
-
-  if (sortColumn){
-    datos = datos.slice().sort((a,b)=>{
-      const va = String(a[sortColumn]||'').toLowerCase();
-      const vb = String(b[sortColumn]||'').toLowerCase();
-      return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    // ---- Estado de conexión ----
+    db.ref(".info/connected").on("value", snap => {
+      if (snap.val() === true) {
+        estadoTexto.textContent = "Firebase Realtime (conectado)";
+        pillDot.classList.remove("warn");
+        pillDot.classList.add("ok");
+      } else {
+        estadoTexto.textContent = "Firebase Realtime (desconectado)";
+        pillDot.classList.remove("ok");
+        pillDot.classList.add("warn");
+      }
     });
-  }
 
-  tabla.innerHTML = '';
-  datos.forEach(r => {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td>${escapeHtml(r.nick1)}</td>
-      <td>${escapeHtml(r.nick2||'-')}</td>
-      <td>${escapeHtml(r.nick3||'-')}</td>
-      <td><span class="condicion ${r.condicion?.toLowerCase()}">${escapeHtml(r.condicion||'-')}</span></td>
-      <td>
-        <button class="btn btn-edit" data-id="${r.id}">Editar</button>
-        <button class="btn btn-delete" data-id="${r.id}">Eliminar</button>
-      </td>`;
-    tabla.appendChild(fila);
-  });
-  contador.textContent = `Registros: ${datos.length}`;
-}
-
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]));
-}
-
-function genId(){ return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`; }
-
-// Guardar/actualizar
-form.addEventListener('submit', async e => {
-  e.preventDefault();
-  if (!form.checkValidity()){ form.reportValidity(); return; }
-  const nuevo = {
-    nick1: form.nick1.value.trim(),
-    nick2: form.nick2.value.trim(),
-    nick3: form.nick3.value.trim(),
-    condicion: form.condicion.options[form.condicion.selectedIndex].text
-  };
-  if (editId){ await storage.update(editId, nuevo); editId = null; document.getElementById('btn-guardar').textContent = 'Guardar'; }
-  else { await storage.add(nuevo); }
-  form.reset();
-});
-
-// Editar/eliminar
-tabla.addEventListener('click', async e => {
-  const id = e.target.dataset.id;
-  if (!id) return;
-  if (e.target.classList.contains('btn-edit')){
-    const r = registros.find(x => x.id === id);
-    if (!r) return;
-    form.nick1.value = r.nick1 || '';
-    form.nick2.value = r.nick2 || '';
-    form.nick3.value = r.nick3 || '';
-    [...form.condicion.options].forEach(o => { if (o.text === r.condicion) o.selected = true; });
-    editId = id; document.getElementById('btn-guardar').textContent = 'Actualizar';
-  }
-  if (e.target.classList.contains('btn-delete')){
-    if (confirm('¿Seguro que quieres eliminar este registro?')){ await storage.remove(id); }
-  }
-});
-
-// Orden columnas
-Array.from(document.querySelectorAll('#tabla-registros th[data-col]')).forEach(th => {
-  th.addEventListener('click', () => {
-    const col = th.dataset.col;
-    sortAsc = sortColumn === col ? !sortAsc : true;
-    sortColumn = col;
-    renderTabla();
-  });
-});
-
-// Buscar
-searchInput.addEventListener('input', renderTabla);
-
-// Borrar todo
-document.getElementById('clear-all').addEventListener('click', async () => {
-  if (confirm('¿Seguro que quieres borrar todos los registros?')){ await storage.clear(); }
-});
-
-// Exportar a Excel
-document.getElementById('export-excel').addEventListener('click', () => {
-  if (!registros.length){ alert('No hay registros para exportar'); return; }
-  const data = registros.map(r => ({
-    'Nick 1': r.nick1 || '',
-    'Nick 2': r.nick2 || '',
-    'Nick 3': r.nick3 || '',
-    'Condición': r.condicion || ''
-  }));
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, 'Registros');
-  XLSX.writeFile(wb, 'registros.xlsx');
-});
-
-// Importar desde Excel
-document.getElementById('import-xlsx').addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async evt => {
-    const data = new Uint8Array(evt.target.result);
-    const wb = XLSX.read(data, { type: 'array' });
-    const wsName = wb.SheetNames[0];
-    const ws = wb.Sheets[wsName];
-    const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-
-    await storage.clear();
-
-    for (const row of json){
-      const nick1 = (row['Nick 1'] || '').trim();
-      const nick2 = (row['Nick 2'] || '').trim();
-      const nick3 = (row['Nick 3'] || '').trim();
-      const condicion = (row['Condición'] || '').trim();
-      if (nick1 && condicion) await storage.add({ nick1, nick2, nick3, condicion });
+    // ---- Mostrar registros ----
+    function mostrarRegistros(snapshot) {
+      tablaBody.innerHTML = "";
+      snapshot.forEach(child => {
+        const key = child.key;
+        const data = child.val();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${data.nick}</td>
+          <td>${data.condicion}</td>
+          <td class="actions">
+            <button onclick="editarRegistro('${key}')">Editar</button>
+            <button onclick="borrarRegistro('${key}')">Eliminar</button>
+          </td>
+        `;
+        tablaBody.appendChild(row);
+      });
     }
 
-    fileInput.value = '';
-  };
-  reader.readAsArrayBuffer(file);
-});
-</script>
+    registrosRef.on('value', mostrarRegistros);
+
+    // ---- Agregar registro ----
+    document.getElementById('registro-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const nick = document.getElementById('nick').value.trim();
+      const condicion = document.getElementById('condicion').value;
+      if (!nick) return;
+      registrosRef.push({ nick, condicion });
+      e.target.reset();
+    });
+
+    // ---- Editar registro ----
+    window.editarRegistro = function (key) {
+      const nuevoNick = prompt('Nuevo nick:');
+      if (nuevoNick) {
+        registrosRef.child(key).update({ nick: nuevoNick });
+      }
+    };
+
+    // ---- Borrar registro ----
+    window.borrarRegistro = function (key) {
+      if (confirm('¿Seguro que deseas borrar este registro?')) {
+        registrosRef.child(key).remove();
+      }
+    };
+
+    // ---- Borrar todo ----
+    document.getElementById('borrar-todo').addEventListener('click', () => {
+      if (confirm('¿Seguro que deseas borrar TODOS los registros?')) {
+        registrosRef.remove();
+      }
+    });
+
+    // ---- Exportar a Excel ----
+    document.getElementById('exportar-excel').addEventListener('click', () => {
+      registrosRef.once('value', snapshot => {
+        const data = [];
+        snapshot.forEach(child => {
+          const val = child.val();
+          data.push({ Nick: val.nick, Condición: val.condicion });
+        });
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Registros");
+        XLSX.writeFile(wb, "registros.xlsx");
+      });
+    });
+
+    // ---- Importar desde Excel ----
+    const fileInput = document.getElementById('importar-excel');
+    document.getElementById('boton-importar').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet);
+        rows.forEach(row => {
+          if (row.Nick && row.Condición) {
+            registrosRef.push({ nick: row.Nick, condicion: row.Condición });
+          }
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
 </body>
 </html>
