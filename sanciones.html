@@ -86,6 +86,7 @@
         <select id="subtipo" class="w-full p-2 rounded bg-gray-700 hidden">
           <option value="Muteo">Muteo</option>
           <option value="Advertencia">Advertencia</option>
+          <option value="Kick">Kick</option>
         </select>
 
         <input id="durabilidad" type="text" placeholder="Durabilidad" class="w-full p-2 rounded bg-gray-700" required />
@@ -155,20 +156,16 @@
 
     document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
 
-    // Mostrar subtipo solo para Muteo/Advertencia
     window.mostrarSubtipo = () => {
       if(tipo.value === "Muteo/Advertencia") subtipo.classList.remove('hidden');
       else subtipo.classList.add('hidden');
     };
 
-    // Guardar/editar sanción
     form.onsubmit = async (e) => {
       e.preventDefault();
       const id = registroId.value || Date.now().toString();
       let tipoFinal = tipo.value;
-      if(tipo.value === "Muteo/Advertencia") {
-        tipoFinal = subtipo.value; // Guardamos Muteo o Advertencia
-      }
+      if(tipo.value === "Muteo/Advertencia") tipoFinal = subtipo.value;
       const item = {
         id,
         sancion: sancion.value.trim(),
@@ -179,7 +176,6 @@
       drawer.classList.add('hidden');
     };
 
-    // Escuchar cambios en tiempo real
     onValue(sancionesRef, (snapshot) => {
       const datos = snapshot.val() || {};
       const lista = Object.values(datos);
@@ -201,7 +197,7 @@
             <button class="bg-red-500 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
           </td>`;
 
-        if(r.tipo === "Muteo" || r.tipo === "Advertencia") {
+        if(r.tipo === "Muteo" || r.tipo === "Advertencia" || r.tipo === "Kick") {
           tbodyMuteos.appendChild(tr);
           muteos++;
         } else if(r.tipo === "Ban Temporal") {
@@ -218,7 +214,6 @@
       emptyPerm.classList.toggle('hidden', perm > 0);
     });
 
-    // Editar sanción
     window.editar = async (id) => {
       const snap = await get(ref(db, `sanciones/${id}`));
       const data = snap.val();
@@ -228,8 +223,7 @@
       sancion.value = data.sancion;
       durabilidad.value = data.durabilidad;
 
-      // Seleccionar tipo y subtipo
-      if(data.tipo === "Muteo" || data.tipo === "Advertencia") {
+      if(data.tipo === "Muteo" || data.tipo === "Advertencia" || data.tipo === "Kick") {
         tipo.value = "Muteo/Advertencia";
         subtipo.classList.remove('hidden');
         subtipo.value = data.tipo;
@@ -241,7 +235,6 @@
       drawer.classList.remove('hidden');
     };
 
-    // Eliminar sanción
     window.eliminar = async (id) => {
       await remove(ref(db, `sanciones/${id}`));
     };
