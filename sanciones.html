@@ -1,194 +1,159 @@
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestor de Sanciones con Realtime Database</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-900 text-white">
+  <div class="max-w-6xl mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Gestor de Sanciones</h1>
+    <button id="btnAbrir" class="bg-green-500 px-4 py-2 rounded">Añadir sanción</button>
+    <div class="overflow-x-auto mt-4">
+      <table class="min-w-full border border-gray-700">
+        <thead class="bg-gray-800">
+          <tr>
+            <th class="px-3 py-2 text-left">ID</th>
+            <th class="px-3 py-2 text-left">Nombre</th>
+            <th class="px-3 py-2 text-left">Tipo</th>
+            <th class="px-3 py-2 text-right">Durabilidad</th>
+            <th class="px-3 py-2 text-left">Inicio</th>
+            <th class="px-3 py-2 text-left">Fin</th>
+            <th class="px-3 py-2 text-left">Estado</th>
+            <th class="px-3 py-2 text-left">Observaciones</th>
+            <th class="px-3 py-2 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="divide-y divide-gray-700"></tbody>
+      </table>
+      <div id="empty" class="text-center text-gray-400 py-4">No hay registros todavía</div>
+    </div>
+  </div>
 
-<script>
-  // 1. CONFIGURAR FIREBASE (pega aquí tu configuración)
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://TU_PROJECT_ID.firebaseio.com",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_PROJECT_ID.appspot.com",
-    messagingSenderId: "ID",
-    appId: "APP_ID"
-  };
+  <!-- Modal para añadir/editar -->
+  <div id="drawer" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-gray-800 p-4 rounded-lg max-w-md w-full">
+      <h2 id="drawerTitle" class="text-xl mb-2">Añadir sanción</h2>
+      <form id="form" class="space-y-2">
+        <input type="hidden" id="registroId" />
+        <input id="nombre" placeholder="Nombre" class="w-full p-2 rounded bg-gray-700" required />
+        <select id="tipo" class="w-full p-2 rounded bg-gray-700">
+          <option>Leve</option>
+          <option>Grave</option>
+          <option>Muy grave</option>
+        </select>
+        <input id="durabilidad" type="number" placeholder="Durabilidad (días)" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="inicio" type="date" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="fin" type="date" class="w-full p-2 rounded bg-gray-700" disabled />
+        <textarea id="obs" placeholder="Observaciones" class="w-full p-2 rounded bg-gray-700"></textarea>
+        <div class="flex justify-between">
+          <button type="button" id="btnCerrar" class="px-4 py-2 bg-gray-600 rounded">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-green-500 rounded">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
+      authDomain: "et-accounts.firebaseapp.com",
+      databaseURL: "https://et-accounts-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "et-accounts",
+      storageBucket: "et-accounts.appspot.com",
+      messagingSenderId: "1006439185867",
+      appId: "1:1006439185867:web:ee9221150be923340e4a4e"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const sancionesRef = db.ref("sanciones");
 
-  const sancionesRef = db.ref("sanciones");
+    const tbody = document.getElementById('tbody');
+    const empty = document.getElementById('empty');
+    const drawer = document.getElementById('drawer');
+    const form = document.getElementById('form');
+    const registroId = document.getElementById('registroId');
+    const nombre = document.getElementById('nombre');
+    const tipo = document.getElementById('tipo');
+    const durabilidad = document.getElementById('durabilidad');
+    const inicio = document.getElementById('inicio');
+    const fin = document.getElementById('fin');
+    const obs = document.getElementById('obs');
 
-  const tbody = document.getElementById('tbody');
-  const empty = document.getElementById('empty');
-  const drawer = document.getElementById('drawer');
-  const form = document.getElementById('form');
-  const buscar = document.getElementById('buscar');
-  const filtroEstado = document.getElementById('filtroEstado');
-
-  const registroId = document.getElementById('registroId');
-  const nombre = document.getElementById('nombre');
-  const tipo = document.getElementById('tipo');
-  const durabilidad = document.getElementById('durabilidad');
-  const inicio = document.getElementById('inicio');
-  const fin = document.getElementById('fin');
-  const obs = document.getElementById('obs');
-
-  const btnAbrir = document.getElementById('btnAbrir');
-  const btnCerrar = document.getElementById('btnCerrar');
-
-  let datos = {};
-  let sortBy = 'inicio';
-  let sortDir = 'desc';
-
-  const pad = n => String(n).padStart(2, '0');
-  const addDays = (date, days) => {
-    const d = new Date(date);
-    d.setDate(d.getDate() + Number(days || 0));
-    return d;
-  };
-  const toDateInputValue = d =>
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const format = d =>
-    d ? new Date(d).toLocaleDateString('es-ES', {year:'numeric', month:'2-digit', day:'2-digit'}) : '';
-  const estadoDe = (inicio, fin) => {
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const f = new Date(fin); f.setHours(0,0,0,0);
-    return (f >= hoy) ? 'vigente' : 'expirada';
-  };
-
-  function openDrawer(editItem) {
-    drawer.classList.add('open');
-    if (editItem) {
-      document.getElementById('drawerTitle').textContent = 'Editar sanción';
-      registroId.value = editItem.id;
-      nombre.value = editItem.nombre;
-      tipo.value = editItem.tipo;
-      durabilidad.value = editItem.durabilidad;
-      inicio.value = editItem.inicio;
-      fin.value = editItem.fin;
-      obs.value = editItem.obs || '';
-    } else {
-      document.getElementById('drawerTitle').textContent = 'Añadir sanción';
+    document.getElementById('btnAbrir').onclick = () => {
+      drawer.classList.remove('hidden');
       form.reset();
       registroId.value = '';
-      const hoy = new Date();
-      inicio.value = toDateInputValue(hoy);
-      durabilidad.value = 0;
-      fin.value = toDateInputValue(hoy);
-    }
-    nombre.focus();
-  }
-  const closeDrawer = () => drawer.classList.remove('open');
-
-  function updateFin() {
-    if (!inicio.value) return;
-    const f = addDays(inicio.value, parseInt(durabilidad.value || 0));
-    fin.value = toDateInputValue(f);
-  }
-  inicio.addEventListener('change', updateFin);
-  durabilidad.addEventListener('input', updateFin);
-
-  function render() {
-    const q = (buscar.value || '').toLowerCase();
-    const filt = filtroEstado.value;
-
-    let lista = Object.values(datos);
-
-    lista = lista.filter(r =>
-      [r.nombre, r.tipo, r.obs].join(' ').toLowerCase().includes(q)
-    );
-    if (filt !== 'todos') lista = lista.filter(r => r.estado === filt);
-
-    lista.sort((a, b) => {
-      const A = a[sortBy], B = b[sortBy];
-      if (sortBy === 'durabilidad') return (sortDir === 'asc' ? 1 : -1) * (A - B);
-      if (['inicio', 'fin'].includes(sortBy))
-        return (sortDir === 'asc' ? 1 : -1) * (new Date(A) - new Date(B));
-      return (sortDir === 'asc' ? 1 : -1) * String(A).localeCompare(String(B), 'es');
-    });
-
-    tbody.innerHTML = '';
-    lista.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${r.id}</td>
-        <td>${r.nombre}</td>
-        <td>${r.tipo}</td>
-        <td class="right">${r.durabilidad}</td>
-        <td>${format(r.inicio)}</td>
-        <td>${format(r.fin)}</td>
-        <td><span class="chip ${r.estado}">${r.estado.toUpperCase()}</span></td>
-        <td>${r.obs || ''}</td>
-        <td class="right">
-          <button class="ghost" data-edit="${r.id}">✏️</button>
-          <button class="danger" data-del="${r.id}">🗑️</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    empty.style.display = lista.length ? 'none' : 'block';
-
-    tbody.querySelectorAll('[data-edit]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-edit');
-        openDrawer(datos[id]);
-      });
-    });
-    tbody.querySelectorAll('[data-del]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-del');
-        if (confirm('¿Eliminar este registro?')) {
-          sancionesRef.child(id).remove();
-        }
-      });
-    });
-  }
-
-  // Listener en tiempo real
-  sancionesRef.on('value', snapshot => {
-    datos = snapshot.val() || {};
-    render();
-  });
-
-  // Guardar/editar sanción
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    updateFin();
-    const id = registroId.value || Date.now().toString();
-    const item = {
-      id,
-      nombre: nombre.value.trim(),
-      tipo: tipo.value,
-      durabilidad: Number(durabilidad.value || 0),
-      inicio: inicio.value,
-      fin: fin.value,
-      estado: estadoDe(inicio.value, fin.value),
-      obs: obs.value.trim()
     };
-    if (!item.nombre || !item.inicio) {
-      alert('Nombre e inicio son obligatorios.');
-      return;
+    document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
+
+    function addDays(date, days) {
+      const d = new Date(date);
+      d.setDate(d.getDate() + Number(days || 0));
+      return d;
     }
-    sancionesRef.child(id).set(item);
-    closeDrawer();
-  });
+    function toDateInputValue(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    function estadoDe(inicio, fin) {
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const f = new Date(fin); f.setHours(0, 0, 0, 0);
+      return (f >= hoy) ? 'vigente' : 'expirada';
+    }
 
-  buscar.addEventListener('input', render);
-  filtroEstado.addEventListener('change', render);
-  btnAbrir.addEventListener('click', () => openDrawer());
-  btnCerrar.addEventListener('click', closeDrawer);
-  drawer.addEventListener('click', e => { if (e.target === drawer) closeDrawer(); });
+    durabilidad.oninput = () => {
+      if (inicio.value) fin.value = toDateInputValue(addDays(inicio.value, durabilidad.value));
+    };
+    inicio.onchange = () => {
+      if (inicio.value) fin.value = toDateInputValue(addDays(inicio.value, durabilidad.value));
+    };
 
-  // Ordenar columnas
-  document.querySelectorAll('th[data-sort]').forEach(th => {
-    th.style.cursor = 'pointer';
-    th.addEventListener('click', () => {
-      const key = th.getAttribute('data-sort');
-      if (sortBy === key) sortDir = (sortDir === 'asc' ? 'desc' : 'asc');
-      else { sortBy = key; sortDir = 'asc'; }
-      render();
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const id = registroId.value || Date.now().toString();
+      const item = {
+        id,
+        nombre: nombre.value.trim(),
+        tipo: tipo.value,
+        durabilidad: Number(durabilidad.value || 0),
+        inicio: inicio.value,
+        fin: fin.value,
+        estado: estadoDe(inicio.value, fin.value),
+        obs: obs.value.trim()
+      };
+      sancionesRef.child(id).set(item);
+      drawer.classList.add('hidden');
+    };
+
+    sancionesRef.on('value', (snapshot) => {
+      const datos = snapshot.val() || {};
+      const lista = Object.values(datos);
+      tbody.innerHTML = '';
+      if (!lista.length) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      lista.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-3 py-2">${r.id}</td>
+          <td class="px-3 py-2">${r.nombre}</td>
+          <td class="px-3 py-2">${r.tipo}</td>
+          <td class="px-3 py-2 text-right">${r.durabilidad}</td>
+          <td class="px-3 py-2">${r.inicio}</td>
+          <td class="px-3 py-2">${r.fin}</td>
+          <td class="px-3 py-2">${r.estado}</td>
+          <td class="px-3 py-2">${r.obs}</td>
+          <td class="px-3 py-2 text-right">
+            <button onclick="sancionesRef.child('${r.id}').remove()" class="bg-red-500 px-2 py-1 rounded">Eliminar</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
     });
-  });
-</script>
+  </script>
+</body>
+</html>
