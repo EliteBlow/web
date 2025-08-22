@@ -106,12 +106,13 @@
 /*********************\n * 1) CONFIG FIREBASE\n *********************/
 // ⚠️ Sustituye estos valores por los tuyos desde la consola de Firebase → Configuración del proyecto → Tu app web
 const firebaseConfig = {
-  apiKey: "AIzaSyCJfMfgHA4dY-jDqE9EnBUfgsQL_f2TuqI",
-  authDomain: "form-registros.firebaseapp.com",
-  projectId: "form-registros",
-  storageBucket: "form-registros.firebasestorage.app",
-  messagingSenderId: "260146015836",
-  appId: "1:260146015836:web:54fe453ccdea07cc094099"
+  apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
+  authDomain: "et-accounts.firebaseapp.com",
+  databaseURL: "https://et-accounts-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "et-accounts",
+  storageBucket: "et-accounts.firebasestorage.app",
+  messagingSenderId: "1006439185867",
+  appId: "1:1006439185867:web:ee9221150be923340e4a4e"
 };
 const USE_FIREBASE = Boolean(firebaseConfig.apiKey && !String(firebaseConfig.apiKey).includes('TU_API_KEY'));
 let db = null;
