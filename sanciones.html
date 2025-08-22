@@ -8,6 +8,9 @@
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center p-6">
 
+  <!-- Título principal -->
+  <h1 class="text-2xl font-bold mb-4 text-center">Gestor de Sanciones</h1>
+
   <!-- Estado de conexión -->
   <div id="status" class="mb-4 text-sm text-yellow-400">Conectando a Realtime Database...</div>
 
@@ -19,17 +22,16 @@
   <!-- Tablas de registros -->
   <div class="w-full max-w-6xl space-y-8">
 
-    <!-- Tabla de Muteos y Advertencias -->
+    <!-- Tabla de Muteos, Advertencias y Kicks -->
     <div>
       <h2 class="text-lg font-bold mb-2 text-center">Muteos, Advertencias y Kicks</h2>
       <table class="w-full border-collapse bg-gray-800 rounded">
         <thead>
           <tr class="bg-gray-700">
-            <th class="px-3 py-2 text-left">ID</th>
-            <th class="px-3 py-2 text-left">Sanción</th>
-            <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-left">Durabilidad</th>
-            <th class="px-3 py-2 text-left">Acciones</th>
+            <th class="px-3 py-2 text-center">Sanción</th>
+            <th class="px-3 py-2 text-center">Tipo de Sanción</th>
+            <th class="px-3 py-2 text-center">Durabilidad</th>
+            <th class="px-3 py-2 text-center">Acciones</th>
           </tr>
         </thead>
         <tbody id="tbodyMuteo"></tbody>
@@ -42,11 +44,10 @@
       <table class="w-full border-collapse bg-gray-800 rounded">
         <thead>
           <tr class="bg-gray-700">
-            <th class="px-3 py-2 text-left">ID</th>
-            <th class="px-3 py-2 text-left">Sanción</th>
-            <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-left">Durabilidad</th>
-            <th class="px-3 py-2 text-left">Acciones</th>
+            <th class="px-3 py-2 text-center">Sanción</th>
+            <th class="px-3 py-2 text-center">Tipo de Sanción</th>
+            <th class="px-3 py-2 text-center">Durabilidad</th>
+            <th class="px-3 py-2 text-center">Acciones</th>
           </tr>
         </thead>
         <tbody id="tbodyBanTemp"></tbody>
@@ -59,11 +60,10 @@
       <table class="w-full border-collapse bg-gray-800 rounded">
         <thead>
           <tr class="bg-gray-700">
-            <th class="px-3 py-2 text-left">ID</th>
-            <th class="px-3 py-2 text-left">Sanción</th>
-            <th class="px-3 py-2 text-left">Tipo de Sanción</th>
-            <th class="px-3 py-2 text-left">Durabilidad</th>
-            <th class="px-3 py-2 text-left">Acciones</th>
+            <th class="px-3 py-2 text-center">Sanción</th>
+            <th class="px-3 py-2 text-center">Tipo de Sanción</th>
+            <th class="px-3 py-2 text-center">Durabilidad</th>
+            <th class="px-3 py-2 text-center">Acciones</th>
           </tr>
         </thead>
         <tbody id="tbodyBanPerm"></tbody>
@@ -74,28 +74,28 @@
   <!-- Modal -->
   <div id="drawer" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
     <div class="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md">
-      <h3 id="modalTitulo" class="text-lg font-bold mb-4">Añadir sanción</h3>
+      <h3 id="modalTitulo" class="text-lg font-bold mb-4 text-center">Añadir sanción</h3>
       <form id="form" class="space-y-4">
         <input type="hidden" id="registroId" />
-        <input id="sancion" type="text" placeholder="Nombre de la sanción" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="sancion" type="text" placeholder="Nombre de la sanción" class="w-full p-2 rounded bg-gray-700 text-center" required />
 
         <!-- Selector principal -->
-        <select id="tipo" class="w-full p-2 rounded bg-gray-700" onchange="mostrarSubtipo()">
+        <select id="tipo" class="w-full p-2 rounded bg-gray-700 text-center" onchange="mostrarSubtipo()">
           <option value="Muteo/Advertencia">Muteo o Advertencia</option>
           <option value="Ban Temporal">Ban Temporal</option>
           <option value="Ban Permanente">Ban Permanente</option>
         </select>
 
         <!-- Selector adicional -->
-        <select id="subtipo" class="w-full p-2 rounded bg-gray-700">
+        <select id="subtipo" class="w-full p-2 rounded bg-gray-700 text-center">
           <option value="Muteo">Muteo</option>
           <option value="Advertencia">Advertencia</option>
           <option value="Kick">Kick</option>
         </select>
 
-        <input id="durabilidad" type="text" placeholder="Durabilidad (ej: 3 días, Permanente)" class="w-full p-2 rounded bg-gray-700" required />
+        <input id="durabilidad" type="text" placeholder="Durabilidad (ej: 3h, Permanente)" class="w-full p-2 rounded bg-gray-700 text-center" required />
 
-        <div class="flex justify-end space-x-2">
+        <div class="flex justify-center space-x-2">
           <button type="button" id="btnCerrar" class="px-4 py-2 bg-gray-600 rounded">Cancelar</button>
           <button type="submit" class="px-4 py-2 bg-green-600 rounded">Guardar</button>
         </div>
@@ -143,7 +143,7 @@
       }
     };
 
-    // Abrir modal para añadir sanción
+    // Abrir modal
     document.getElementById('btnAbrir').onclick = () => {
       document.getElementById('modalTitulo').textContent = "Añadir sanción";
       drawer.classList.remove('hidden');
@@ -172,7 +172,7 @@
       drawer.classList.add('hidden');
     };
 
-    // Escuchar cambios en tiempo real
+    // Escuchar cambios
     onValue(sancionesRef, (snapshot) => {
       tbodyMuteo.innerHTML = '';
       tbodyBanTemp.innerHTML = '';
@@ -181,11 +181,10 @@
       Object.values(data).forEach((r) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="px-3 py-2">${r.id}</td>
-          <td class="px-3 py-2">${r.sancion}</td>
-          <td class="px-3 py-2">${r.tipo}</td>
-          <td class="px-3 py-2">${r.durabilidad}</td>
-          <td class="px-3 py-2 space-x-2">
+          <td class="px-3 py-2 text-center">${r.sancion}</td>
+          <td class="px-3 py-2 text-center">${r.tipo}</td>
+          <td class="px-3 py-2 text-center">${r.durabilidad}</td>
+          <td class="px-3 py-2 text-center space-x-2">
             <button class="bg-yellow-500 px-2 py-1 rounded" onclick="editar('${r.id}')">Editar</button>
             <button class="bg-red-600 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
           </td>
@@ -203,7 +202,7 @@
       status.classList.add("text-green-400");
     });
 
-    // Editar sanción
+    // Editar
     window.editar = async (id) => {
       const snapshot = await get(ref(db, `sanciones/${id}`));
       const r = snapshot.val();
@@ -224,7 +223,7 @@
       }
     };
 
-    // Eliminar sanción
+    // Eliminar
     window.eliminar = async (id) => {
       await remove(ref(db, `sanciones/${id}`));
     };
