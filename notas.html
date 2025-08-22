@@ -17,6 +17,7 @@
     form { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
     #nickForm button { background-color: #4CAF50; color: white; font-weight: bold; border-radius: 5px; padding: 8px 15px; border: none; cursor: pointer; }
     #nickForm button:hover { background-color: #45a049; }
+    #searchNick { padding: 5px; width: 200px; margin-bottom: 20px; text-align: center; }
     table { width: 90%; max-width: 700px; border-collapse: collapse; margin-bottom: 20px; background-color: #fff; }
     th, td { border: 1px solid #333; padding: 8px; text-align: center; word-break: break-word; }
     button { padding: 5px 10px; margin: 2px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
@@ -52,6 +53,10 @@
   <input type="text" id="nickInput" placeholder="Introduce un nick" required>
   <button type="submit">Añadir Nick</button>
 </form>
+
+<div>
+  <input type="text" id="searchNick" placeholder="Buscar nick...">
+</div>
 
 <table>
   <thead>
@@ -102,6 +107,7 @@
   const nickForm = document.getElementById('nickForm');
   const nickInput = document.getElementById('nickInput');
   const nickTableBody = document.getElementById('nickTableBody');
+  const searchInput = document.getElementById('searchNick');
 
   const notesModal = document.getElementById('notesModal');
   const modalNickName = document.getElementById('modalNickName');
@@ -132,6 +138,19 @@
     newNickRef.set({ name: nick, notes: {} })
       .then(() => { nickInput.value=''; })
       .catch(err => { alert('Error al añadir el nick: '+err.message); console.error(err); });
+  });
+
+  // Filtrar nicks
+  searchInput.addEventListener('input', ()=>{
+    const filter = searchInput.value.toLowerCase();
+    const rows = nickTableBody.getElementsByTagName('tr');
+    for(let row of rows){
+      const nickCell = row.getElementsByTagName('td')[0];
+      if(nickCell){
+        const text = nickCell.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+      }
+    }
   });
 
   // Mostrar nicks en la tabla
