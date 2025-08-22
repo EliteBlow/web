@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="auth.js"></script>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
   <title>Gestión de Nicks y Notas</title>
   <style>
     body {
@@ -49,7 +49,7 @@
 <body>
 
 <button id="backButton" onclick="window.location.href='index.html'">Volver</button>
-<h1>Gestión de Notas de Usuarios</h1>
+<h1>Gestión de Nicks</h1>
 
 <form id="nickForm">
   <input type="text" id="nickInput" placeholder="Introduce un nick" required>
@@ -118,23 +118,26 @@
   closeModal.onclick = () => { notesModal.style.display = "none"; }
   window.onclick = (event) => { if(event.target==notesModal) notesModal.style.display="none"; }
 
-  colorCheckboxes = document.querySelectorAll('input[name="noteColor"]');
+  const colorCheckboxes = document.querySelectorAll('input[name="noteColor"]');
   colorCheckboxes.forEach(chk=>{
     chk.addEventListener('change', ()=>{
       if(chk.checked){ colorCheckboxes.forEach(other=>{ if(other!==chk) other.checked=false; }); }
     });
   });
 
+  // Añadir nick
   nickForm.addEventListener('submit', e=>{
     e.preventDefault();
     const nick = nickInput.value.trim();
-    if(nick){
-      const newNickRef = database.ref('nicks').push();
-      newNickRef.set({name:nick,notes:{}});
-      nickInput.value='';
-    }
+    if (!nick) return;
+
+    const newNickRef = database.ref('nicks').push();
+    newNickRef.set({ name: nick, notes: {} })
+      .then(() => { nickInput.value=''; })
+      .catch(err => { alert('Error al añadir el nick: '+err.message); console.error(err); });
   });
 
+  // Mostrar nicks en la tabla
   database.ref('nicks').on('value', snapshot=>{
     nickTableBody.innerHTML='';
     snapshot.forEach(child=>{
@@ -157,8 +160,9 @@
       deleteButton.textContent='Eliminar'; deleteButton.classList.add('delete-btn');
       deleteButton.addEventListener('click', ()=>{
         if(confirm(`¿Eliminar el nick "${data.name}" y todas sus notas?`)){
-          database.ref('nicks/'+key).remove();
-          if(currentNickKey===key) notesModal.style.display='none';
+          database.ref('nicks/'+key).remove()
+            .then(() => { if(currentNickKey===key) notesModal.style.display='none'; })
+            .catch(err => { alert('Error al eliminar el nick: '+err.message); console.error(err); });
         }
       });
 
@@ -170,6 +174,7 @@
     });
   });
 
+  // Añadir nota
   function addNote(){
     const noteText = newNoteInput.value.trim();
     let color=null;
@@ -212,7 +217,3 @@
 </script>
 </body>
 </html>
-
-
-
-
