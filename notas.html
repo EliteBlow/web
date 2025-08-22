@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Nicks y Notas</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1 { text-align: center; margin-bottom: 20px; }
+
+    form {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    /* Botón Añadir Nick */
+    #nickForm button {
+      background-color: #4CAF50; /* Verde */
+      color: white;
+      font-weight: bold;
+      border-radius: 5px;
+      padding: 8px 15px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #nickForm button:hover { background-color: #45a049; }
+
+    table {
+      width: 90%;
+      max-width: 700px;
+      border-collapse: collapse;
+      margin: 0 auto 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #333;
+      padding: 8px;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    /* Botones de la tabla y modal */
+    button {
+      padding: 5px 10px;
+      margin: 2px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    button:hover { opacity: 0.9; }
+
+    /* Botón Notas */
+    .notes-btn { background-color: #2196F3; color: white; }
+    .notes-btn:hover { background-color: #1976D2; }
+
+    /* Botón Eliminar Nick */
+    .delete-btn { background-color: #f44336; color: white; }
+    .delete-btn:hover { background-color: #d32f2f; }
+
+    /* Botón Añadir Nota */
+    #addNoteButton { background-color: #4CAF50; color: white; }
+    #addNoteButton:hover { background-color: #45a049; }
+
+    /* Botón Eliminar Nota */
+    .delete-note-btn { background-color: #FF9800; color: white; }
+    .delete-note-btn:hover { background-color: #FB8C00; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+
+    .close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      align-self: flex-end;
+    }
+    .close:hover { color: black; }
+
+    .notes-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    #notesList { list-style: none; padding: 0; margin: 0; }
+
+    #notesList li {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 2px;
+      word-break: break-word;
+    }
+
+    .note-input-container {
+      display: flex;
+      margin-top: 5px;
+    }
+
+    #newNoteInput { flex: 1; padding: 5px; margin-right: 5px; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .modal-content { width: 95%; padding: 15px; }
+      table { width: 100%; }
+      #newNoteInput { font-size: 14px; }
+      #addNoteButton { font-size: 14px; padding: 5px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Gestión de Nicks</h1>
+
+  <form id="nickForm">
+    <input type="text" id="nickInput" placeholder="Introduce un nick" required>
+    <button type="submit">Añadir Nick</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nick</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="nickTableBody"></tbody>
+  </table>
+
+  <!-- Modal -->
+  <div id="notesModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2 id="modalNickName">Notas</h2>
+
+      <div class="notes-container">
+        <ul id="notesList"></ul>
+      </div>
+
+      <div class="note-input-container">
+        <input type="text" id="newNoteInput" placeholder="Escribe una nueva nota">
+        <button id="addNoteButton">Añadir Nota</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = { 
+      apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
+      authDomain: "et-accounts.firebaseapp.com",
+      databaseURL: "https://et-accounts-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "et-accounts",
+      storageBucket: "et-accounts.appspot.com",
+      messagingSenderId: "1006439185867",
+      appId: "1:1006439185867:web:ee922115be923340e4a4e"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const nickForm = document.getElementById('nickForm');
+    const nickInput = document.getElementById('nickInput');
+    const nickTableBody = document.getElementById('nickTableBody');
+
+    const notesModal = document.getElementById('notesModal');
+    const modalNickName = document.getElementById('modalNickName');
+    const notesList = document.getElementById('notesList');
+    const newNoteInput = document.getElementById('newNoteInput');
+    const addNoteButton = document.getElementById('addNoteButton');
+    const closeModal = document.getElementById('closeModal');
+
+    let currentNickKey = null;
+
+    closeModal.onclick = () => { notesModal.style.display = "none"; }
+    window.onclick = (event) => { if (event.target == notesModal) notesModal.style.display = "none"; }
+
+    nickForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const nick = nickInput.value.trim();
+      if (nick) {
+        const newNickRef = database.ref('nicks').push();
+        newNickRef.set({ name: nick, notes: {} });
+        nickInput.value = '';
+      }
+    });
+
+    database.ref('nicks').on('value', snapshot => {
+      nickTableBody.innerHTML = '';
+      snapshot.forEach(childSnapshot => {
+        const key = childSnapshot.key;
+        const data = childSnapshot.val();
+
+        const row = document.createElement('tr');
+        const nickCell = document.createElement('td');
+        nickCell.textContent = data.name;
+
+        const actionsCell = document.createElement('td');
+
+        const notesButton = document.createElement('button');
+        notesButton.textContent = 'Notas';
+        notesButton.classList.add('notes-btn');
+        notesButton.addEventListener('click', () => {
+          currentNickKey = key;
+          modalNickName.textContent = `Notas de ${data.name}`;
+          renderNotes(data.notes || {});
+          notesModal.style.display = 'flex';
+        });
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Eliminar';
+        deleteButton.classList.add('delete-btn');
+        deleteButton.addEventListener('click', () => {
+          if (confirm(`¿Eliminar el nick "${data.name}" y todas sus notas?`)) {
+            database.ref('nicks/' + key).remove();
+            if (currentNickKey === key) notesModal.style.display = 'none';
+          }
+        });
+
+        actionsCell.appendChild(notesButton);
+        actionsCell.appendChild(deleteButton);
+        row.appendChild(nickCell);
+        row.appendChild(actionsCell);
+        nickTableBody.appendChild(row);
+      });
+    });
+
+    function renderNotes(notesObj) {
+      notesList.innerHTML = '';
+      for (const noteKey in notesObj) {
+        const li = document.createElement('li');
+        li.textContent = notesObj[noteKey];
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Eliminar';
+        deleteBtn.classList.add('delete-note-btn');
+        deleteBtn.addEventListener('click', () => {
+          database.ref(`nicks/${currentNickKey}/notes/${noteKey}`).remove();
+        });
+
+        li.appendChild(deleteBtn);
+        notesList.appendChild(li);
+      }
+    }
+
+    addNoteButton.addEventListener('click', () => {
+      const noteText = newNoteInput.value.trim();
+      if (noteText && currentNickKey) {
+        const newNoteRef = database.ref(`nicks/${currentNickKey}/notes`).push();
+        newNoteRef.set(noteText);
+        newNoteInput.value = '';
+      }
+    });
+
+    // Añadir nota al presionar Enter
+    newNoteInput.addEventListener('keydown', (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addNoteButton.click();
+      }
+    });
+
+    database.ref('nicks').on('child_changed', snapshot => {
+      if (snapshot.key === currentNickKey) renderNotes(snapshot.val().notes || {});
+    });
+  </script>
+</body>
+</html>
