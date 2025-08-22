@@ -77,10 +77,15 @@
         <input type="hidden" id="registroId" />
         <input id="sancion" placeholder="Nombre de la sanción" class="w-full p-2 rounded bg-gray-700" required />
 
-        <select id="tipo" class="w-full p-2 rounded bg-gray-700">
+        <select id="tipo" class="w-full p-2 rounded bg-gray-700" onchange="mostrarSubtipo()">
           <option value="Muteo/Advertencia">Muteo o Advertencia</option>
           <option value="Ban Temporal">Ban Temporal</option>
           <option value="Ban Permanente">Ban Permanente</option>
+        </select>
+
+        <select id="subtipo" class="w-full p-2 rounded bg-gray-700 hidden">
+          <option value="Muteo">Muteo</option>
+          <option value="Advertencia">Advertencia</option>
         </select>
 
         <input id="durabilidad" type="text" placeholder="Durabilidad" class="w-full p-2 rounded bg-gray-700" required />
@@ -125,6 +130,7 @@
     const registroId = document.getElementById('registroId');
     const sancion = document.getElementById('sancion');
     const tipo = document.getElementById('tipo');
+    const subtipo = document.getElementById('subtipo');
     const durabilidad = document.getElementById('durabilidad');
     const modalTitulo = document.getElementById('modalTitulo');
 
@@ -144,23 +150,36 @@
       drawer.classList.remove('hidden');
       form.reset();
       registroId.value = '';
+      subtipo.classList.add('hidden');
     };
 
     document.getElementById('btnCerrar').onclick = () => drawer.classList.add('hidden');
 
+    // Mostrar subtipo solo para Muteo/Advertencia
+    window.mostrarSubtipo = () => {
+      if(tipo.value === "Muteo/Advertencia") subtipo.classList.remove('hidden');
+      else subtipo.classList.add('hidden');
+    };
+
+    // Guardar/editar sanción
     form.onsubmit = async (e) => {
       e.preventDefault();
       const id = registroId.value || Date.now().toString();
+      let tipoFinal = tipo.value;
+      if(tipo.value === "Muteo/Advertencia") {
+        tipoFinal = subtipo.value; // Guardamos Muteo o Advertencia
+      }
       const item = {
         id,
         sancion: sancion.value.trim(),
-        tipo: tipo.value,
+        tipo: tipoFinal,
         durabilidad: durabilidad.value.trim()
       };
       await set(ref(db, `sanciones/${id}`), item);
       drawer.classList.add('hidden');
     };
 
+    // Escuchar cambios en tiempo real
     onValue(sancionesRef, (snapshot) => {
       const datos = snapshot.val() || {};
       const lista = Object.values(datos);
@@ -182,13 +201,13 @@
             <button class="bg-red-500 px-2 py-1 rounded" onclick="eliminar('${r.id}')">Eliminar</button>
           </td>`;
 
-        if (r.tipo === "Muteo/Advertencia") {
+        if(r.tipo === "Muteo" || r.tipo === "Advertencia") {
           tbodyMuteos.appendChild(tr);
           muteos++;
-        } else if (r.tipo === "Ban Temporal") {
+        } else if(r.tipo === "Ban Temporal") {
           tbodyTemp.appendChild(tr);
           temp++;
-        } else if (r.tipo === "Ban Permanente") {
+        } else if(r.tipo === "Ban Permanente") {
           tbodyPerm.appendChild(tr);
           perm++;
         }
@@ -199,18 +218,30 @@
       emptyPerm.classList.toggle('hidden', perm > 0);
     });
 
+    // Editar sanción
     window.editar = async (id) => {
       const snap = await get(ref(db, `sanciones/${id}`));
       const data = snap.val();
-      if (!data) return;
+      if(!data) return;
       modalTitulo.textContent = "Editar sanción";
       registroId.value = data.id;
       sancion.value = data.sancion;
-      tipo.value = data.tipo;
       durabilidad.value = data.durabilidad;
+
+      // Seleccionar tipo y subtipo
+      if(data.tipo === "Muteo" || data.tipo === "Advertencia") {
+        tipo.value = "Muteo/Advertencia";
+        subtipo.classList.remove('hidden');
+        subtipo.value = data.tipo;
+      } else {
+        tipo.value = data.tipo;
+        subtipo.classList.add('hidden');
+      }
+
       drawer.classList.remove('hidden');
     };
 
+    // Eliminar sanción
     window.eliminar = async (id) => {
       await remove(ref(db, `sanciones/${id}`));
     };
