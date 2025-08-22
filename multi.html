@@ -14,6 +14,21 @@
       text-align: center;
       color: #333;
     }
+    #btn-volver {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 8px 12px;
+      background: #777;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #btn-volver:hover {
+      background: #555;
+    }
     form {
       margin-bottom: 20px;
       display: flex;
@@ -140,6 +155,9 @@
   </style>
 </head>
 <body>
+  <!-- Botón Volver -->
+  <button id="btn-volver" onclick="window.location.href='index.html'">Volver</button>
+
   <h1>Gestión de Multicuentas</h1>
 
   <!-- Estado de conexión -->
@@ -238,7 +256,6 @@
     const editNick3 = document.getElementById('edit-nick3');
     const guardarModalBtn = document.getElementById('guardar-modal');
     const cerrarModalBtn = document.getElementById('cerrar-modal');
-
     let editKey = null;
 
     // Estado conexión
