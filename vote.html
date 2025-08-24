@@ -135,5 +135,23 @@
             document.getElementById("voteCount").textContent = count;
         }, speed);
     </script>
+    <!-- Botón para abrir todas las URLs -->
+    <button id="abrirTodas" style="margin-top:20px; padding:10px 20px; font-size:16px;">Ver Todo</button>
+</div>
+
+<script>
+document.getElementById("abrirTodas").addEventListener("click", () => {
+    const urls = [
+        "https://www.40servidoresmc.es/eternal-survival",
+        "https://mcservidores.com/servidor/912",
+        "https://servidoresdeminecraft.es/server/vote/wv5kc6q3/eternaln.org",
+        "https://minecraftservers.org/vote/668560",
+        "https://minecraft-mp.com/server/338165/vote/",
+        "https://topg.org/es/servidores-de-minecraft/server-668781#vote"
+    ];
+
+    urls.forEach(url => window.open(url, "_blank"));
+});
+</script>
 </body>
 </html>
