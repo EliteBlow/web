@@ -3,24 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EToolz - Sanciones</title>
+  <title>Gestor de Sanciones</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center p-6">
 
-  <!-- Barra superior con botón Volver -->
+  <!-- Barra superior -->
   <div class="w-full max-w-6xl flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-center flex-1">    Gestión de Sanciones</h1>
+    <!-- Botón Ver Sanciones a la izquierda -->
+    <button onclick="window.open('https://sanciones.eternaln.org/', '_blank')" class="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded shadow">
+      Ver Sanciones
+    </button>
+
+    <!-- Título centrado -->
+    <h1 class="text-2xl font-bold text-center flex-1">Gestor de Sanciones</h1>
+
+    <!-- Botón Volver a la derecha -->
     <button onclick="window.location.href='index.html'" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded shadow">
       Volver
     </button>
   </div>
-<!-- Botón Sanciones Externas -->
-      <button onclick="window.open('https://sanciones.eternaln.org/', '_blank')" class="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded shadow">
-        Sanciones ET
-      </button>
-    </div>
-  </div>
+
   <!-- Estado de conexión -->
   <div id="status" class="mb-4 text-sm text-yellow-400">Conectando a Realtime Database...</div>
 
@@ -31,7 +34,6 @@
 
   <!-- Tablas de registros -->
   <div class="w-full max-w-6xl space-y-8">
-
     <!-- Tabla de Muteos, Advertencias y Kicks -->
     <div>
       <h2 class="text-lg font-bold mb-2 text-center">Muteos, Advertencias y Kicks</h2>
