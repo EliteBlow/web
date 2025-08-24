@@ -136,8 +136,7 @@
         }, speed);
     </script>
     <!-- Botón para abrir todas las URLs -->
-    <button id="abrirTodas" style="margin-top:20px; padding:10px 20px; font-size:16px;">Ver Todo</button>
-</div>
+<button id="abrirTodas" style="margin-top:20px; padding:10px 20px; font-size:16px;">VER TODAS</button>
 
 <script>
 document.getElementById("abrirTodas").addEventListener("click", () => {
@@ -150,7 +149,11 @@ document.getElementById("abrirTodas").addEventListener("click", () => {
         "https://topg.org/es/servidores-de-minecraft/server-668781#vote"
     ];
 
-    urls.forEach(url => window.open(url, "_blank"));
+    // Abrir todas las URLs en pestañas separadas usando variables para cada ventana
+    urls.forEach(url => {
+        const win = window.open(url, '_blank');
+        if (win) win.focus(); // Opcional: enfocar la pestaña recién abierta
+    });
 });
 </script>
 </body>
