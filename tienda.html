@@ -2,19 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Abriendo tienda...</title>
-  <script>
-    window.onload = function() {
-      // Abre la tienda en una nueva pestaña
-      window.open("https://tienda.eternaln.org/", "_blank");
-      // Redirige la pestaña actual al index.html
-      window.location.href = "index.html";
-    };
-  </script>
+  <title>Abrir tienda</title>
 </head>
 <body>
-  <p>Abriendo la tienda en una pestaña nueva...<br>
-     Si no ocurre, <a href="https://tienda.eternaln.org/" target="_blank">haz clic aquí</a>.
-  </p>
+  <h1>Entrar a la tienda</h1>
+  <button onclick="abrirTienda()">Abrir tienda en pestaña nueva</button>
+
+  <script>
+    function abrirTienda() {
+      window.open("https://tienda.eternaln.org/", "_blank");
+      window.location.href = "index.html";
+    }
+  </script>
 </body>
 </html>
