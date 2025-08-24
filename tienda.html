@@ -2,15 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Abrir tienda</title>
+  <title>Abrir Tienda</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #005fd4;
+    }
+  </style>
 </head>
 <body>
-  <h1>Entrar a la tienda</h1>
-  <button onclick="abrirTienda()">Abrir tienda en pestaña nueva</button>
+  <h1>Bienvenido a la tienda</h1>
+  <p>Haz clic en el botón para abrir la tienda en una pestaña nueva.</p>
+  <button onclick="abrirTienda()">Ir a la Tienda</button>
 
   <script>
     function abrirTienda() {
+      // Abrir la tienda en una pestaña nueva
       window.open("https://tienda.eternaln.org/", "_blank");
+      // Redirigir esta pestaña a index.html
       window.location.href = "index.html";
     }
   </script>
