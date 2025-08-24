@@ -62,7 +62,7 @@ const database = firebase.database();
 const usersRef = database.ref('users');
 const chatRef = database.ref('adminChat');
 
-const availablePages = ["sanciones.html", "notas.html", "multi.html", "ss.html", "vote.html", "admin.html"];
+const availablePages = ["tienda.html", "sanciones.html", "notas.html", "multi.html", "ss.html", "vote.html", "admin.html"];
 let currentUser = localStorage.getItem("currentUser");
 let currentUserData = {};
 
@@ -262,4 +262,5 @@ function renderChat(){
 </script>
 </body>
 </html>
+
 
