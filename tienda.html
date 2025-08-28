@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>EToolz - Tienda Oficial</title>
   <style>
-    /* Estilos generales */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -29,19 +28,14 @@
     }
 
     .container {
-      margin: 20px auto;
+      margin: 40px auto;
       width: 90%;
-      max-width: 1200px;
+      max-width: 600px;
+      text-align: center;
       background-color: #1e1e1e;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.7);
-      overflow: hidden;
-    }
-
-    iframe {
-      width: 100%;
-      height: 80vh;
-      border: none;
+      padding: 40px 20px;
     }
 
     footer {
@@ -51,8 +45,7 @@
       color: #888;
     }
 
-    /* Botón volver */
-    .volver {
+    .button {
       display: inline-block;
       margin: 10px auto 20px auto;
       padding: 12px 24px;
@@ -63,9 +56,10 @@
       text-decoration: none;
       border-radius: 8px;
       transition: background-color 0.3s;
+      cursor: pointer;
     }
 
-    .volver:hover {
+    .button:hover {
       background-color: #cc8400;
     }
   </style>
@@ -78,7 +72,8 @@
   <div class="bar"></div>
 
   <div class="container">
-    <iframe src="https://tienda.eternaln.org/"></iframe>
+    <p>Haz clic en el botón para abrir la tienda oficial:</p>
+    <button class="button" id="openShop">Abrir Tienda</button>
   </div>
 
   <footer>
@@ -86,7 +81,19 @@
   </footer>
 
   <div style="text-align: center;">
-    <a href="index.html" class="volver">Volver</a>
+    <a href="index.html" class="button">Volver</a>
   </div>
+
+  <script>
+    document.getElementById('openShop').addEventListener('click', function() {
+      // Abrir la tienda en una nueva pestaña
+      window.open('https://tienda.eternaln.org/', '_blank');
+
+      // Esperar 2 segundos y luego redirigir a index.html
+      setTimeout(function() {
+        window.location.href = 'index.html';
+      }, 2000);
+    });
+  </script>
 </body>
 </html>
