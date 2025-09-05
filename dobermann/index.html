@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Barbería Dobermann — Cortes & Afeitado profesional | Molins de Rei</title>
+  <meta name="description" content="Barbería Dobermann — barbería masculina en Molins de Rei. Cortes, afeitados clásicos, arreglos de barba y citas online." />
+  <link rel="canonical" href="https://dobermann.es/" />
+<style>
+    /* Estilo del banner de cookies */
+    #cookie-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #222;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      z-index: 9999;
+      display: none;
+    }
+
+    #cookie-banner button {
+      margin-left: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    #cookie-banner button:hover {
+      background-color: #45a049;
+    }
+  </style>
+  <!-- Open Graph -->
+  <meta property="og:title" content="Barbería Dobermann — Cortes & Afeitado profesional" />
+  <meta property="og:description" content="Barbería Dobermann — barbería masculina en Ciudad. Reserva tu cita online." />
+  <meta property="og:image" content="images/logo-placeholder.svg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dobermann.es/" />
+
+  <!-- Google Fonts (Playfair Display + Montserrat) -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- JSON-LD LocalBusiness (edítalo con tus datos) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HairSalon",
+    "name": "Barbería Dobermann",
+    "image": "https://doberman.es/images/logo.png",
+    "@id": "https://doberman.es/#barberia",
+    "url": "https://doberman.es/",
+    "telephone": "+34 620 08 97 95",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Calle Doctor Barraquer 2",
+      "addressLocality": "Molins de Rei",
+      "postalCode": "08750",
+      "addressCountry": "ES"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 41.3701192,
+      "longitude": 2.0166636
+    },
+    "openingHours": ["Tu-Fr 10:00-14:00 y 15:00-19:00", "Sa 10:00-14:00"],
+    "priceRange": "€€",
+    "sameAs": [
+      "https://facebook.com/tu-pagina",
+      "https://instagram.com/tu-pagina"
+    ]
+  }
+  </script>
+
+  <meta name="theme-color" content="#0b0b0b" />
+</head>
+<body class="bg-base text-base-font">
+
+  <!-- Header / Nav -->
+  <header class="site-header" role="banner">
+    <div class="container header-grid">
+      <a class="logo" href="/" aria-label="Barbería Dobermann - Inicio">
+        <img src="images/dobermann_logo.png" alt="Barbería Dobermann logo" width="200" />
+      </a>
+
+  <!-- Botón hamburguesa para móvil -->
+    <div class="menu-toggle" id="menu-toggle" aria-label="Abrir menú">&#9776;</div>
+
+      <nav class="main-nav" role="navigation" aria-label="Menú principal">
+        <button id="navToggle" class="nav-toggle" aria-expanded="false" aria-controls="mainMenu">Menú</button>
+        <ul id="mainMenu" class="nav-list">
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#sobre">Sobre nosotros</a></li>
+          <li><a href="#servicios">Servicios</a></li>
+          <li><a href="#equipo">Equipo</a></li>
+          <li><a href="#galeria">Galería</a></li>
+          <li><a href="#reservas">Reservas</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section id="inicio" class="hero" aria-label="Hero">
+    <picture>
+  <source srcset="images/fondo1.jpg 1200w, images/fondo1.jpg 800w"
+          sizes="100vw" />
+  <img class="hero-img" src="images/fondo1.jpg" alt="Interior barbería clásica" loading="lazy">
+</picture>
+
+
+    <div class="hero-content">
+      <h1 class="hero-title">Barbería Dobermann</h1>
+      <p class="hero-sub">Cortes clásicos y modernos · Afeitado a navaja · Experiencia personalizada</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#reservas">Reservar ahora</a>
+        <a class="btn btn-outline" href="#servicios">Ver servicios</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sobre -->
+  <section id="sobre" class="section container" aria-labelledby="sobre-title">
+    <h2 id="sobre-title">Sobre nosotros</h2>
+    <p class="lead">En <strong>Dobermann</strong> combinamos técnicas clásicas con un trato moderno.<br>Nuestro equipo tiene una amplia carrera profesional y un estilo propio.<br>Nuestro objetivo es que salgas con un corte impecable y una experiencia memorable.</p>
+    <div class="grid about-grid">
+      <div>
+        <h3>Visión</h3>
+        <p>Ser la barbería de referencia en Molins de Rei por calidad, profesionalidad y ambiente.</p>
+      </div>
+      <div>
+        <h3>Misión</h3>
+        <p>Ofrecer servicios personalizados en un ambiente cómodo, con productos de alta gama.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Servicios -->
+  <section id="servicios" class="section container" aria-labelledby="servicios-title">
+    <h2 id="servicios-title">Servicios</h2>
+    <div class="services-grid">
+      <article class="service-card" aria-labelledby="svc1">
+        <h3 id="svc1">Corte Clásico</h3>
+        <p class="duration">20 min</p>
+        <p class="price">€15</p>
+        <p>Corte, lavado y acabado.</p>
+      </article>
+
+      <article class="service-card" aria-labelledby="svc2">
+        <h3 id="svc2">Corte Premium</h3>
+        <p class="duration">30 min</p>
+        <p class="price">€20</p>
+        <p>Corte detallado, lavado y acabado con productos premium.</p>
+      </article>
+
+      <article class="service-card" aria-labelledby="svc3">
+        <h3 id="svc3">Afeitado</h3>
+        <p class="duration">15 min</p>
+        <p class="price">€10</p>
+        <p>Afeitado tradicional a navaja.</p>
+      </article>
+
+      <article class="service-card" aria-labelledby="svc4">
+        <h3 id="svc4">Arreglo de barba</h3>
+        <p class="duration">15 min</p>
+        <p class="price">€12</p>
+        <p>Perfilado, recorte y fijación.</p>
+      </article>
+
+      <article class="service-card" aria-labelledby="svc5">
+        <h3 id="svc5">Corte Clásico + barba</h3>
+        <p class="duration">30 min</p>
+        <p class="price">€20</p>
+        <p>Corte, perfilado/afeitado, lavado y acabado.</p>
+      </article>
+      
+        <article class="service-card" aria-labelledby="svc6">
+        <h3 id="svc6">Corte Premium + barba</h3>
+        <p class="duration">45 min</p>
+        <p class="price">€30</p>
+        <p>Corte detallado, perfilado/afeitado, lavado y acabado con productos premium..</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Equipo -->
+  <section id="equipo" class="section container" aria-labelledby="equipo-title">
+    <h2 id="equipo-title">Nuestro equipo</h2>
+    <div class="team-grid">
+      <figure class="team-card">
+        <img src="images/empleado1.jpg" alt="Barbero 1" loading="lazy">
+        <figcaption>
+          <strong>Álvaro</strong> <span>Maestro barbero</span>
+          <p>Especialista en cortes clásicos y afeitado.</p>
+        </figcaption>
+      </figure>
+
+      <figure class="team-card">
+        <img src="images/empleado2.jpg" alt="Barbero 2" loading="lazy">
+        <figcaption>
+          <strong>Jorge</strong> <span>Barbero</span>
+          <p>Diseños y degradados modernos.</p>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Galería -->
+  <section id="galeria" class="section container" aria-labelledby="galeria-title">
+    <h2 id="galeria-title">Galería</h2>
+    <div class="gallery-grid" role="list">
+      <button class="gallery-item" data-index="0" aria-label="Ver imagen 1">
+        <img src="images/muestra1.jpg" alt="Cliente con corte clásico" loading="lazy">
+      </button>
+      <button class="gallery-item" data-index="1" aria-label="Ver imagen 2">
+        <img src="images/muestra3.jpg" alt="Detalle afeitado" loading="lazy">
+      </button>
+      <button class="gallery-item" data-index="2" aria-label="Ver imagen 3">
+        <img src="images/muestra2.jpg" alt="Interior barbería" loading="lazy">
+      </button>
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-label="Visor de imágenes">
+    <button class="lightbox-close" aria-label="Cerrar">&times;</button>
+    <img id="lightbox-img" alt="">
+    <div class="lightbox-controls">
+      <button id="prev" aria-label="Imagen anterior">‹</button>
+      <button id="next" aria-label="Siguiente imagen">›</button>
+    </div>
+  </div>
+
+  <!-- Reservas -->
+  <section id="reservas" class="section container" aria-labelledby="reservas-title">
+    <h2 id="reservas-title">Reservas</h2>
+    <p>Reserva tu cita online.</p>
+
+<!-- Embebido Appointment Schedule -->
+<div class="embed-wrap" style="width: 100%; height: 100vh; border-radius: 8px; overflow: hidden;">
+  <iframe 
+    title="Reservas - Barbería Dobermann" 
+    src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1vGI-gnnVyrTsw2uOXVooDJJvNDXfVjImBRDIw2hDyysYJpKBy4WJNIBBPKF-D9hutHuTN3tHi?gv=true" 
+    frameborder="0" 
+    style="width:100%; height:100%; border:0;" 
+    loading="lazy">
+  </iframe>
+</div>
+
+  <!-- Contacto -->
+  <section id="contacto" class="section container" aria-labelledby="contacto-title">
+    <h2 id="contacto-title">Contacto</h2>
+
+    <!-- Por defecto el formulario apunta a server/send.php (funciona si ejecutas un servidor PHP local).
+         Si prefieres usar Formspree, reemplaza action por tu endpoint de Formspree (https://formspree.io/f/XXXXX) -->
+    <form id="contactForm" class="contact-form" action="server/send.php" method="POST" aria-label="Formulario de contacto">
+      <label for="name">Nombre</label>
+      <input id="name" name="name" required />
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required />
+
+      <label for="message">Mensaje</label>
+      <textarea id="message" name="message" rows="4" required></textarea>
+
+      <!-- Honeypot (antispam) - oculto con CSS -->
+      <label class="hp">Si ves este campo, no lo rellenes<input name="website" tabindex="-1" autocomplete="off" /></label>
+
+      <button type="submit" class="btn btn-primary">Enviar mensaje</button>
+
+      <div id="formStatus" role="status" aria-live="polite"></div>
+    </form>
+
+    <div class="contact-info">
+      <p><strong>Teléfono:</strong> <a href="tel:+34620089795">+34 620 289 795</a></p>
+      <p><strong>Horario:</strong> Mar–Vie 10:00–14:00 y 15:00-19:00 · Sáb 10:00–14:00</p>
+
+      <!-- Map: reemplaza la src por tu embed de Google Maps -->
+      <div class="map-wrap" aria-hidden="false">
+        <iframe
+          src="https://www.google.com/maps/embed/v1/place?key=TU_API_KEY&q=Carrer+del+Doctor+Barraquer+2,08750+Molins+de+Rei,Barcelona"
+          width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <p class="muted small">Dirección: Calle Doctor Barraque 2, Molins de Rei.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <h4>Barbería Dobermann</h4>
+        <p>Calle Doctor Barraquer 2, 08750, Molins de Rei</p>
+        <p>Horario: Mar–Vie 10:00–14:00 y 15:00-19:00 · Sáb 09:00–14:00</p>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <p><a href="tel:+34620089795">+34 620 089 795</a></p>
+        <p><a href="mailto:info@dobermann.es">info@dobermann.es</a></p>
+      </div>
+      <div>
+        <h4>Síguenos</h4>
+        <p><a href="#" aria-label="Instagram">Instagram</a> · <a href="#" aria-label="Facebook">Facebook</a></p>
+      </div>
+    </div>
+    <div class="attribution">
+      <small>© <span id="year"></span> Barbería Dobermann — Diseño elegante | Hecho con ❤️</small>
+    </div>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
