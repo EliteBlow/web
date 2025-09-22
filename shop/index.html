@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Precios - Minecraft & Slimefun</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Gestor de Precios - Minecraft & Slimefun</h1>
+            <p class="subtitle">Gestiona precios de objetos de Minecraft 1.21.5 y Slimefun 4</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="menu">
+            <button class="active" data-section="add-section">Añadir Objeto</button>
+            <button data-section="view-section">Ver Objetos</button>
+            <button data-section="search-section">Buscar Objetos</button>
+        </div>
+        
+        <section id="add-section" class="content-section active">
+            <h2>Añadir Nuevo Objeto</h2>
+            <form id="object-form">
+                <div class="form-group">
+                    <label for="object-source">Selecciona la fuente del objeto:</label>
+                    <select id="object-source" required>
+                        <option value="">Selecciona una fuente</option>
+                        <option value="minecraft">Minecraft 1.21.5</option>
+                        <option value="slimefun">Slimefun 4</option>
+                    </select>
+                </div>
+                
+                <div id="minecraft-objects" class="object-selection" style="display: none;">
+                    <div class="section-title minecraft-section">Objetos de Minecraft 1.21.5</div>
+                </div>
+                
+                <div id="slimefun-objects" class="object-selection" style="display: none;">
+                    <div class="section-title slimefun-section">Objetos de Slimefun 4</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="object-price">Precio (€)</label>
+                    <input type="number" id="object-price" min="0" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="object-description">Descripción (opcional)</label>
+                    <input type="text" id="object-description">
+                </div>
+                
+                <div class="form-group">
+                    <label for="object-unique">¿Es único? (solo puede haber uno en el inventario)</label>
+                    <select id="object-unique" required>
+                        <option value="true">Sí</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn">Guardar Objeto</button>
+            </form>
+        </section>
+        
+        <section id="view-section" class="content-section">
+            <h2>Lista de Objetos</h2>
+            <div id="objects-table-container">
+                <table id="objects-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Fuente</th>
+                            <th>Precio</th>
+                            <th>Descripción</th>
+                            <th>¿Es único?</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="objects-table-body">
+                    </tbody>
+                </table>
+                <div id="empty-message" class="empty-message" style="display: none;">
+                    No hay objetos guardados. ¡Añade el primero!
+                </div>
+            </div>
+        </section>
+        
+        <section id="search-section" class="content-section">
+            <h2>Buscar Objetos</h2>
+            <div class="form-group">
+                <input type="text" id="search-input" placeholder="Buscar por nombre, fuente o descripción...">
+            </div>
+            <div id="search-results-container">
+                <table id="search-results-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Fuente</th>
+                            <th>Precio</th>
+                            <th>Descripción</th>
+                            <th>¿Es único?</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search-results-body">
+                    </tbody>
+                </table>
+                <div id="no-results-message" class="empty-message" style="display: none;">
+                    No se encontraron objetos que coincidan con tu búsqueda.
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+    <footer>
+        <div class="container">
+            <p>Gestor de Precios para Minecraft & Slimefun &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
