@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Objetos de Eternal</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #45a049;
+            --accent-color: #FF9800;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f0f0;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .search-section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+        }
+        
+        .search-info {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--light-color);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+        }
+        
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .object-image {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .source-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .source-minecraft {
+            background-color: #8B4513;
+            color: white;
+        }
+        
+        .source-slimefun {
+            background-color: #4A235A;
+            color: white;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+        
+        .results-count {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: #4CAF50;
+        }
+        
+        .notification.error {
+            background-color: #f44336;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .export-buttons {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-export {
+            background-color: #2196F3;
+        }
+        
+        .btn-export:hover {
+            background-color: #1976D2;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+            
+            .object-image {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .search-section {
+                padding: 20px;
+            }
+            
+            .export-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            th, td {
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Buscador de Objetos</h1>
+            <p class="subtitle">Encuentra el precio de cada objeto</p>
+        </header>
+        
+        <section class="search-section">
+            <h2>Búsqueda de Objetos</h2>
+            
+            <div class="form-group">
+                <label for="search-input">Buscar objetos:</label>
+                <input type="text" id="search-input" placeholder="Escribe para buscar por nombre, precio, descripción o fuente...">
+                <div class="search-info">
+                    💡 Puedes buscar por: nombre del objeto, precio (ej: "10€"), descripción o fuente (Minecraft/Slimefun)
+                </div>
+            </div>
+            
+            <div class="export-buttons">
+                <button class="btn" id="clear-search">🗑️ Limpiar Búsqueda</button>
+            </div>
+            
+            <div id="results-count" class="results-count" style="display: none;"></div>
+            
+            <div id="search-results-container">
+                <table id="search-results-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Fuente</th>
+                            <th>Precio/Valor</th>
+                            <th>Descripción</th>
+                            <th>¿Es único?</th>
+                            <th>Categoría</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search-results-body">
+                    </tbody>
+                </table>
+                <div id="no-results-message" class="empty-message" style="display: none;">
+                    <h3>🔍 No se encontraron objetos</h3>
+                    <p>No hay objetos que coincidan con tu búsqueda.</p>
+                </div>
+                <div id="loading-message" class="loading" style="display: none;">
+                    Cargando objetos...
+                </div>
+                <div id="error-message" class="empty-message" style="display: none;">
+                    <h3>❌ Error al cargar</h3>
+                    <p>No se pudieron cargar los objetos. Verifica tu conexión.</p>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>Sistema de Búsqueda de Objetos - Minecraft & Slimefun &copy; 2025</p>
+        </footer>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyARrsVZ2LboEe5MblE8GKXVnas-zHB4k5I",
+            authDomain: "et-accounts.firebaseapp.com",
+            databaseURL: "https://et-accounts-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "et-accounts",
+            storageBucket: "et-accounts.firebasestorage.app",
+            messagingSenderId: "1006439185867",
+            appId: "1:1006439185867:web:ca0ddbe47c0570380e4a4e"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Mostrar notificación
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Obtener todos los objetos de Firebase
+        function getAllObjects() {
+            showLoading(true);
+            
+            return database.ref('objects').once('value')
+                .then(snapshot => {
+                    const objects = [];
+                    snapshot.forEach(childSnapshot => {
+                        const obj = childSnapshot.val();
+                        obj.id = childSnapshot.key;
+                        objects.push(obj);
+                    });
+                    showLoading(false);
+                    return objects;
+                })
+                .catch(error => {
+                    console.error('Error obteniendo objetos:', error);
+                    showLoading(false);
+                    showError(true);
+                    showNotification('Error al cargar los objetos', 'error');
+                    throw error;
+                });
+        }
+
+        // Mostrar/ocultar loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading-message');
+            const noResults = document.getElementById('no-results-message');
+            const error = document.getElementById('error-message');
+            const table = document.getElementById('search-results-table');
+            
+            if (show) {
+                loading.style.display = 'block';
+                noResults.style.display = 'none';
+                error.style.display = 'none';
+                table.style.display = 'none';
+            } else {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Mostrar/ocultar error
+        function showError(show) {
+            const error = document.getElementById('error-message');
+            const noResults = document.getElementById('no-results-message');
+            const loading = document.getElementById('loading-message');
+            const table = document.getElementById('search-results-table');
+            
+            if (show) {
+                error.style.display = 'block';
+                noResults.style.display = 'none';
+                loading.style.display = 'none';
+                table.style.display = 'none';
+            } else {
+                error.style.display = 'none';
+            }
+        }
+
+        // Cargar resultados de búsqueda
+        function loadSearchResults(query = '') {
+            getAllObjects().then(objects => {
+                const tbody = document.getElementById('search-results-body');
+                const noResultsMessage = document.getElementById('no-results-message');
+                const table = document.getElementById('search-results-table');
+                const resultsCount = document.getElementById('results-count');
+                
+                tbody.innerHTML = '';
+                showError(false);
+                
+                const filteredObjects = objects.filter(obj => {
+                    if (!query.trim()) return true;
+                    
+                    const searchTerm = query.toLowerCase();
+                    return (
+                        obj.name.toLowerCase().includes(searchTerm) ||
+                        obj.source.toLowerCase().includes(searchTerm) ||
+                        (obj.description && obj.description.toLowerCase().includes(searchTerm)) ||
+                        (obj.price && obj.price.toString().toLowerCase().includes(searchTerm)) ||
+                        (obj.category && obj.category.toLowerCase().includes(searchTerm))
+                    );
+                });
+                
+                // Actualizar contador de resultados
+                if (filteredObjects.length > 0) {
+                    resultsCount.textContent = `📊 ${filteredObjects.length} objeto(s) encontrado(s)`;
+                    resultsCount.style.display = 'inline-block';
+                } else {
+                    resultsCount.style.display = 'none';
+                }
+                
+                if (filteredObjects.length === 0) {
+                    noResultsMessage.style.display = 'block';
+                    table.style.display = 'none';
+                    return;
+                }
+                
+                noResultsMessage.style.display = 'none';
+                table.style.display = 'table';
+                
+                filteredObjects.forEach(obj => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <img src="${obj.image}" alt="${obj.name}" class="object-image" 
+                                 onerror="this.src='https://via.placeholder.com/40x40/cccccc/666666?text=?'">
+                        </td>
+                        <td><strong>${obj.name}</strong></td>
+                        <td>
+                            <span class="source-badge ${obj.source === 'minecraft' ? 'source-minecraft' : 'source-slimefun'}">
+                                ${obj.source === 'minecraft' ? 'Minecraft 1.21.5' : 'Slimefun 4'}
+                            </span>
+                        </td>
+                        <td>${obj.price || 'No especificado'}</td>
+                        <td>${obj.description || '-'}</td>
+                        <td>${obj.unique ? '✅ Sí' : '❌ No'}</td>
+                        <td>${obj.category || 'General'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            }).catch(error => {
+                console.error('Error en búsqueda:', error);
+            });
+        }
+
+        // Exportar a CSV
+        function exportToCSV() {
+            getAllObjects().then(objects => {
+                if (objects.length === 0) {
+                    showNotification('No hay datos para exportar', 'error');
+                    return;
+                }
+                
+                const headers = ['Nombre', 'Fuente', 'Precio', 'Descripción', 'Único', 'Categoría'];
+                const csvContent = [
+                    headers.join(','),
+                    ...objects.map(obj => [
+                        `"${obj.name}"`,
+                        `"${obj.source === 'minecraft' ? 'Minecraft' : 'Slimefun'}"`,
+                        `"${obj.price || ''}"`,
+                        `"${obj.description || ''}"`,
+                        `"${obj.unique ? 'Sí' : 'No'}"`,
+                        `"${obj.category || ''}"`
+                    ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `objetos_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Datos exportados a CSV correctamente');
+            });
+        }
+
+        // Exportar a JSON
+        function exportToJSON() {
+            getAllObjects().then(objects => {
+                if (objects.length === 0) {
+                    showNotification('No hay datos para exportar', 'error');
+                    return;
+                }
+                
+                const jsonData = {
+                    fechaExportacion: new Date().toISOString(),
+                    totalObjetos: objects.length,
+                    objetos: objects
+                };
+                
+                const jsonContent = JSON.stringify(jsonData, null, 2);
+                const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `objetos_${new Date().toISOString().split('T')[0]}.json`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Datos exportados a JSON correctamente');
+            });
+        }
+
+        // Limpiar búsqueda
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            loadSearchResults('');
+            showNotification('Búsqueda limpiada');
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Iniciando aplicación de búsqueda...');
+            
+            // Cargar todos los objetos al inicio
+            loadSearchResults('');
+            
+            // Configurar búsqueda en tiempo real
+            document.getElementById('search-input').addEventListener('input', function() {
+                loadSearchResults(this.value);
+            });
+            
+            // Configurar botones de exportación
+            document.getElementById('export-csv').addEventListener('click', exportToCSV);
+            document.getElementById('export-json').addEventListener('click', exportToJSON);
+            document.getElementById('clear-search').addEventListener('click', clearSearch);
+            
+            // Manejar errores de imágenes
+            document.addEventListener('error', function(e) {
+                if (e.target.tagName === 'IMG' && e.target.classList.contains('object-image')) {
+                    e.target.src = 'https://via.placeholder.com/40x40/cccccc/666666?text=?';
+                }
+            }, true);
+            
+            // Focus en el campo de búsqueda
+            document.getElementById('search-input').focus();
+            
+            console.log('Aplicación de búsqueda inicializada correctamente');
+            showNotification('Sistema de búsqueda cargado correctamente');
+        });
+    </script>
+</body>
+</html>
