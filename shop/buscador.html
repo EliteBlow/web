@@ -319,7 +319,7 @@
                             <th>Fuente</th>
                             <th>Precio/Valor</th>
                             <th>Descripción</th>
-                            <th>¿Es único?</th>
+                            <th>¿Es Premium?</th>
                             <th>Categoría</th>
                         </tr>
                     </thead>
@@ -508,7 +508,7 @@
                     return;
                 }
                 
-                const headers = ['Nombre', 'Fuente', 'Precio', 'Descripción', 'Único', 'Categoría'];
+                const headers = ['Nombre', 'Fuente', 'Precio', 'Descripción', 'Premium', 'Categoría'];
                 const csvContent = [
                     headers.join(','),
                     ...objects.map(obj => [
