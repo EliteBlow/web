@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Precios de EternalN</title>
+    <title>Gestor de Precios - Minecraft & Slimefun</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="styles.css">
@@ -11,7 +11,7 @@
 <body>
     <header>
         <div class="container">
-            <h1>Gestor de Precios de EternalN</h1>
+            <h1>Gestor de Precios de Eternal</h1>
             <p class="subtitle">Minecraft Items & Slimefun 4</p>
         </div>
     </header>
@@ -36,16 +36,16 @@
                 </div>
                 
                 <div id="minecraft-objects" class="object-selection" style="display: none;">
-                    <div class="section-title minecraft-section">Objetos de Minecraft</div>
+                    <div class="section-title minecraft-section">Objetos de Minecraft 1.21.5</div>
                 </div>
                 
                 <div id="slimefun-objects" class="object-selection" style="display: none;">
-                    <div class="section-title slimefun-section">Objetos de Slimefun</div>
+                    <div class="section-title slimefun-section">Objetos de Slimefun 4</div>
                 </div>
                 
                 <div class="form-group">
                     <label for="object-price">Precio ($)</label>
-                    <input type="text" id="object-price" min="0" step="0.01" required>
+                    <input type="text" id="object-price" min="0" step="1" required>
                 </div>
                 
                 <div class="form-group">
@@ -56,8 +56,8 @@
                 <div class="form-group">
                     <label for="object-unique">¿Es un objeto Premium?</label>
                     <select id="object-unique" required>
-                        <option value="false">No</option>
                         <option value="true">Sí</option>
+                        <option value="false">No</option>
                     </select>
                 </div>
                 
