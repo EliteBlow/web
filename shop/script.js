@@ -9,7 +9,6 @@ const KNOWN_MINECRAFT_IMAGES = [
 
 // Lista de imágenes de Slimefun conocidas (para verificación)
 const KNOWN_SLIMEFUN_IMAGES = [
-    
 'advanced_circuit_board.png', 'air.png', 'aluminum_brass_ingot.png', 'aluminum_dust.png', 'aluminum_ingot.png', 'android_memory_core.png', 'angel_talisman.png', 'anvil_talisman.png', 'armor_forge.png', 'automated_panning_machine.png', 'basic_circuit_board.png',
 'battery.png', 'duralumin_ingot.png', 'earth.png', 'electro_magnet.png', 'elytra_scale.png', 'emerald_ring.png', 'enchantment.png', 'ender.png', 'ender_angel_talisman.png', 'ender_anvil_talisman.png', 'lead_dust.png', 'lead ingot.png', 'lightning.png', 'magic_sugar.png',
 'magic_workbench.png', 'magical_book_cover.png', 'magical_glass.png', 'magical_lump1.png', 'magical_lump2.png', 'magical_lump3.png', 'magician_talisman.png', 'magnesium_dust.png', 'silver_ingot.png', 'slimefun_guide.png', 'small_backpack.png', 'small_uranium.png', 'smelters_pickaxe.png',
@@ -100,55 +99,53 @@ function determineCategory(objectName, source) {
 // Función genérica para escanear y cargar imágenes automáticamente
 async function loadImagesAutoScan(imageList, folderPath, sourceType) {
     try {
-        showNotification(`Escaneando imágenes locales de ${sourceType === 'minecraft' ? 'Minecraft' : 'Slimefun'}...`, 'success');
+        console.log(`Iniciando carga de ${sourceType} desde: ${folderPath}`);
         
         const objects = [];
-        let loadedCount = 0;
+        const failedImages = [];
         
-        // Intentar cargar imágenes conocidas
-        const imagePromises = imageList.map(filename => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    // La imagen existe y se cargó correctamente
-                    const objectId = filename.replace('.png', '');
-                    const objectName = formatObjectName(filename);
-                    const category = determineCategory(objectName, sourceType);
-                    
-                    objects.push({
-                        id: objectId,
-                        name: objectName,
-                        image: folderPath + filename,
-                        category: category,
-                        source: sourceType
-                    });
-                    loadedCount++;
-                    resolve(true);
-                };
-                img.onerror = () => {
-                    // La imagen no existe o no se pudo cargar
-                    resolve(false);
-                };
-                img.src = folderPath + filename;
-            });
-        });
-        
-        // Esperar a que todas las comprobaciones terminen
-        await Promise.all(imagePromises);
-        
-        if (objects.length > 0) {
-            showNotification(`Encontradas ${objects.length} imágenes de ${sourceType === 'minecraft' ? 'Minecraft' : 'Slimefun'}`);
-            
-            // Ordenar alfabéticamente por nombre
-            objects.sort((a, b) => a.name.localeCompare(b.name));
-            
-            return objects;
-        } else {
-            throw new Error(`No se encontraron imágenes para ${sourceType}`);
+        for (const filename of imageList) {
+            try {
+                const result = await new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const objectId = filename.replace('.png', '');
+                        const objectName = formatObjectName(filename);
+                        const category = determineCategory(objectName, sourceType);
+                        
+                        objects.push({
+                            id: objectId,
+                            name: objectName,
+                            image: folderPath + filename,
+                            category: category,
+                            source: sourceType
+                        });
+                        console.log(`✓ Imagen cargada: ${filename}`);
+                        resolve(true);
+                    };
+                    img.onerror = () => {
+                        console.log(`✗ Imagen no encontrada: ${folderPath + filename}`);
+                        failedImages.push(filename);
+                        resolve(false);
+                    };
+                    img.src = folderPath + filename;
+                });
+            } catch (error) {
+                console.error(`Error con imagen ${filename}:`, error);
+                failedImages.push(filename);
+            }
         }
         
+        console.log(`Carga completada: ${objects.length} éxitos, ${failedImages.length} fallos`);
+        
+        if (objects.length === 0) {
+            throw new Error(`No se pudo cargar ninguna imagen para ${sourceType}`);
+        }
+        
+        return objects.sort((a, b) => a.name.localeCompare(b.name));
+        
     } catch (error) {
-        console.error(`Error en escaneo automático de ${sourceType}:`, error);
+        console.error(`Error en loadImagesAutoScan para ${sourceType}:`, error);
         throw error;
     }
 }
@@ -158,11 +155,11 @@ async function loadMinecraftObjects() {
     try {
         minecraftObjects = await loadImagesAutoScan(KNOWN_MINECRAFT_IMAGES, 'images/minecraft/', 'minecraft');
         loadObjectsIntoUI(minecraftObjects, 'minecraft-objects');
+        return true;
     } catch (error) {
         console.error('Error cargando Minecraft:', error);
-        // Fallback: crear objetos básicos si no se encuentran imágenes
         createFallbackObjects('minecraft');
-        showNotification('Usando objetos predefinidos de Minecraft', 'warning');
+        return false;
     }
 }
 
@@ -171,17 +168,17 @@ async function loadSlimefunObjects() {
     try {
         slimefunObjects = await loadImagesAutoScan(KNOWN_SLIMEFUN_IMAGES, 'images/slimefun/', 'slimefun');
         loadObjectsIntoUI(slimefunObjects, 'slimefun-objects');
+        return true;
     } catch (error) {
         console.error('Error cargando Slimefun:', error);
-        // Fallback: crear objetos básicos si no se encuentran imágenes
         createFallbackObjects('slimefun');
-        showNotification('Usando objetos predefinidos de Slimefun', 'warning');
+        return false;
     }
 }
 
 // Función de fallback para crear objetos básicos
 function createFallbackObjects(sourceType) {
-    const imageList = sourceType === 'minecraft' ? KNOWN_MINECRAFT_IMAGES : KNOWN_SLIMEFUN_IMAGES;
+    const imageList = sourceType === 'minecraft' ? KNOWN_MINECRAFT_IMAGES.slice(0, 10) : KNOWN_SLIMEFUN_IMAGES.slice(0, 10);
     const folderPath = sourceType === 'minecraft' ? 'images/minecraft/' : 'images/slimefun/';
     
     const objects = imageList.map(filename => {
@@ -210,24 +207,33 @@ function createFallbackObjects(sourceType) {
 // Función principal para cargar todas las librerías
 async function loadCompleteObjectsLibrary() {
     try {
+        showNotification('Cargando objetos...', 'success');
+        
         // Cargar ambos simultáneamente
-        await Promise.all([
+        const [minecraftLoaded, slimefunLoaded] = await Promise.all([
             loadMinecraftObjects(),
             loadSlimefunObjects()
         ]);
         
-        showNotification('Librerías cargadas correctamente');
+        if (minecraftLoaded && slimefunLoaded) {
+            showNotification('Librerías cargadas correctamente');
+        } else {
+            showNotification('Algunos objetos no se cargaron - modo respaldo activado', 'warning');
+        }
         
     } catch (error) {
         console.error('Error cargando librerías:', error);
-        showNotification('Error cargando algunas librerías', 'error');
+        showNotification('Error cargando objetos', 'error');
     }
 }
 
 // Cargar objetos en la UI
 function loadObjectsIntoUI(objects, containerId) {
     const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!container) {
+        console.error(`Contenedor no encontrado: ${containerId}`);
+        return;
+    }
     
     // Limpiar contenedor
     container.innerHTML = '';
@@ -238,50 +244,31 @@ function loadObjectsIntoUI(objects, containerId) {
     sectionTitle.textContent = containerId.includes('minecraft') ? 'Objetos de Minecraft 1.21.5' : 'Objetos de Slimefun 4';
     container.appendChild(sectionTitle);
     
-    // Agrupar objetos por categoría
-    const groupedObjects = {};
+    // Mostrar objetos sin agrupar por categoría (más simple)
     objects.forEach(obj => {
-        if (!groupedObjects[obj.category]) {
-            groupedObjects[obj.category] = [];
-        }
-        groupedObjects[obj.category].push(obj);
+        const item = document.createElement('div');
+        item.className = 'object-item';
+        item.setAttribute('data-id', obj.id);
+        item.setAttribute('data-source', containerId.includes('minecraft') ? 'minecraft' : 'slimefun');
+        item.innerHTML = `
+            <img src="${obj.image}" alt="${obj.name}" class="object-image" 
+                 onerror="this.src='https://via.placeholder.com/48x48/cccccc/666666?text=?'">
+            <span class="object-name">${obj.name}</span>
+        `;
+        
+        item.addEventListener('click', function() {
+            // Deseleccionar todos los objetos
+            document.querySelectorAll('.object-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            // Seleccionar este objeto
+            this.classList.add('selected');
+        });
+        
+        container.appendChild(item);
     });
     
-    // Mostrar por categorías
-    Object.keys(groupedObjects).sort().forEach(category => {
-        // Añadir subtítulo de categoría
-        const categoryTitle = document.createElement('div');
-        categoryTitle.className = 'section-title subcategory';
-        categoryTitle.textContent = category;
-        categoryTitle.style.fontSize = '0.9em';
-        categoryTitle.style.margin = '10px 0 5px 0';
-        categoryTitle.style.padding = '8px 12px';
-        container.appendChild(categoryTitle);
-        
-        // Añadir objetos de esta categoría
-        groupedObjects[category].forEach(obj => {
-            const item = document.createElement('div');
-            item.className = 'object-item';
-            item.setAttribute('data-id', obj.id);
-            item.setAttribute('data-source', containerId.includes('minecraft') ? 'minecraft' : 'slimefun');
-            item.innerHTML = `
-                <img src="${obj.image}" alt="${obj.name}" class="object-image" 
-                     onerror="this.src='https://via.placeholder.com/48x48/cccccc/666666?text=?'">
-                <span class="object-name">${obj.name}</span>
-            `;
-            
-            item.addEventListener('click', function() {
-                // Deseleccionar todos los objetos
-                document.querySelectorAll('.object-item').forEach(el => {
-                    el.classList.remove('selected');
-                });
-                // Seleccionar este objeto
-                this.classList.add('selected');
-            });
-            
-            container.appendChild(item);
-        });
-    });
+    console.log(`Cargados ${objects.length} objetos en ${containerId}`);
 }
 
 // Mostrar/ocultar selección de objetos según la fuente seleccionada
@@ -290,8 +277,8 @@ function toggleObjectSelection() {
     const minecraftSection = document.getElementById('minecraft-objects');
     const slimefunSection = document.getElementById('slimefun-objects');
     
-    minecraftSection.style.display = source === 'minecraft' ? 'grid' : 'none';
-    slimefunSection.style.display = source === 'slimefun' ? 'grid' : 'none';
+    if (minecraftSection) minecraftSection.style.display = source === 'minecraft' ? 'grid' : 'none';
+    if (slimefunSection) slimefunSection.style.display = source === 'slimefun' ? 'grid' : 'none';
     
     // Deseleccionar cualquier objeto previamente seleccionado
     document.querySelectorAll('.object-item').forEach(el => {
@@ -354,14 +341,19 @@ function loadObjectsTable() {
         const tbody = document.getElementById('objects-table-body');
         const emptyMessage = document.getElementById('empty-message');
         
-        tbody.innerHTML = '';
-        
-        if (objects.length === 0) {
-            emptyMessage.style.display = 'block';
+        if (!tbody) {
+            console.error('No se encontró el tbody de la tabla');
             return;
         }
         
-        emptyMessage.style.display = 'none';
+        tbody.innerHTML = '';
+        
+        if (objects.length === 0) {
+            if (emptyMessage) emptyMessage.style.display = 'block';
+            return;
+        }
+        
+        if (emptyMessage) emptyMessage.style.display = 'none';
         
         objects.forEach(obj => {
             const row = document.createElement('tr');
@@ -369,7 +361,7 @@ function loadObjectsTable() {
                 <td><img src="${obj.image}" alt="${obj.name}" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/32x32/cccccc/666666?text=?'"></td>
                 <td>${obj.name}</td>
                 <td>${obj.source === 'minecraft' ? 'Minecraft 1.21.5' : 'Slimefun 4'}</td>
-                <td>${obj.price} €</td>
+                <td>${obj.price || 'No especificado'}</td>
                 <td>${obj.description || '-'}</td>
                 <td>${obj.unique ? 'Sí' : 'No'}</td>
                 <td class="actions">
@@ -394,6 +386,7 @@ function loadObjectsTable() {
                 deleteObjectFromTable(id);
             });
         });
+        
     }).catch(error => {
         console.error('Error cargando tabla:', error);
         showNotification('Error cargando los objetos guardados', 'error');
@@ -421,9 +414,9 @@ function editObject(id) {
                 objectItem.classList.add('selected');
             }
             
-            document.getElementById('object-price').value = obj.price;
+            document.getElementById('object-price').value = obj.price || '';
             document.getElementById('object-description').value = obj.description || '';
-            document.getElementById('object-unique').value = obj.unique.toString();
+            document.getElementById('object-unique').value = obj.unique ? 'true' : 'false';
             
             // Cambiar a la sección de añadir
             switchSection('add-section');
@@ -458,7 +451,10 @@ function switchSection(sectionId) {
     });
     
     // Mostrar la sección seleccionada
-    document.getElementById(sectionId).classList.add('active');
+    const activeSection = document.getElementById(sectionId);
+    if (activeSection) {
+        activeSection.classList.add('active');
+    }
     
     // Actualizar botones del menú
     document.querySelectorAll('.menu button').forEach(btn => {
@@ -485,20 +481,23 @@ function loadSearchResults(query = '') {
         const tbody = document.getElementById('search-results-body');
         const noResultsMessage = document.getElementById('no-results-message');
         
+        if (!tbody) return;
+        
         tbody.innerHTML = '';
         
         const filteredObjects = objects.filter(obj => 
             obj.name.toLowerCase().includes(query.toLowerCase()) ||
             obj.source.toLowerCase().includes(query.toLowerCase()) ||
-            (obj.description && obj.description.toLowerCase().includes(query.toLowerCase()))
+            (obj.description && obj.description.toLowerCase().includes(query.toLowerCase())) ||
+            (obj.price && obj.price.toString().toLowerCase().includes(query.toLowerCase()))
         );
         
         if (filteredObjects.length === 0) {
-            noResultsMessage.style.display = 'block';
+            if (noResultsMessage) noResultsMessage.style.display = 'block';
             return;
         }
         
-        noResultsMessage.style.display = 'none';
+        if (noResultsMessage) noResultsMessage.style.display = 'none';
         
         filteredObjects.forEach(obj => {
             const row = document.createElement('tr');
@@ -506,7 +505,7 @@ function loadSearchResults(query = '') {
                 <td><img src="${obj.image}" alt="${obj.name}" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/32x32/cccccc/666666?text=?'"></td>
                 <td>${obj.name}</td>
                 <td>${obj.source === 'minecraft' ? 'Minecraft 1.21.5' : 'Slimefun 4'}</td>
-                <td>${obj.price} €</td>
+                <td>${obj.price || 'No especificado'}</td>
                 <td>${obj.description || '-'}</td>
                 <td>${obj.unique ? 'Sí' : 'No'}</td>
             `;
@@ -519,6 +518,40 @@ function loadSearchResults(query = '') {
 
 // Inicializar la aplicación
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Iniciando aplicación...');
+    
+    // Verificar que los elementos esenciales existen
+    const essentialElements = [
+        'object-source', 'minecraft-objects', 'slimefun-objects', 'object-form',
+        'object-price', 'object-description', 'object-unique'
+    ];
+    
+    let allElementsExist = true;
+    essentialElements.forEach(id => {
+        if (!document.getElementById(id)) {
+            console.error(`Elemento no encontrado: ${id}`);
+            allElementsExist = false;
+        }
+    });
+    
+    if (!allElementsExist) {
+        showNotification('Error: Faltan elementos esenciales en la página', 'error');
+        return;
+    }
+    
+    // Configurar el input de precio como texto
+    const priceInput = document.getElementById('object-price');
+    if (priceInput) {
+        priceInput.type = 'text';
+        priceInput.placeholder = 'Ej: 10€, 5 monedas, Gratis, Intercambiable...';
+    }
+    
+    // Actualizar el label del precio
+    const priceLabel = priceInput ? priceInput.previousElementSibling : null;
+    if (priceLabel && priceLabel.tagName === 'LABEL') {
+        priceLabel.textContent = 'Precio o valor (puede ser texto: "10€", "5 monedas", "Gratis", etc.)';
+    }
+    
     // Cargar objetos en la selección
     loadCompleteObjectsLibrary();
     
@@ -533,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Configurar el formulario
+    // Configurar el formulario CON PRECIOS ALFANUMÉRICOS
     document.getElementById('object-form').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -549,7 +582,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const objectSource = selectedObject.getAttribute('data-source');
         const objectName = selectedObject.querySelector('.object-name').textContent;
         const objectImage = selectedObject.querySelector('.object-image').src;
-        const price = parseFloat(document.getElementById('object-price').value);
+        
+        // PRECIO ALFANUMÉRICO - acepta cualquier texto
+        const priceInput = document.getElementById('object-price').value.trim();
+        const price = priceInput === '' ? 'No especificado' : priceInput;
+        
         const description = document.getElementById('object-description').value;
         const unique = document.getElementById('object-unique').value === 'true';
         
@@ -562,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
             name: objectName,
             image: objectImage,
             source: objectSource,
-            price,
+            price: price, // Ahora acepta texto alfanumérico
             description,
             unique,
             category: fullObject ? fullObject.category : 'General'
@@ -587,7 +624,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (unique) {
                 getAllObjects().then(existingObjects => {
                     const exists = existingObjects.some(obj => 
-                        obj.name === objectName && obj.unique && obj.source === objectSource
+                        obj.name.toLowerCase() === objectName.toLowerCase() && 
+                        obj.unique && 
+                        obj.source === objectSource
                     );
                     
                     if (exists) {
@@ -616,9 +655,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Configurar búsqueda en tiempo real
-    document.getElementById('search-input').addEventListener('input', function() {
-        loadSearchResults(this.value);
-    });
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            loadSearchResults(this.value);
+        });
+    }
     
     // Manejar errores de imágenes globalmente
     document.addEventListener('error', function(e) {
@@ -626,4 +668,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.target.src = 'https://via.placeholder.com/48x48/cccccc/666666?text=?';
         }
     }, true);
+    
+    console.log('Aplicación inicializada correctamente');
 });
